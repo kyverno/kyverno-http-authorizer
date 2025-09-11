@@ -7,9 +7,9 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
+	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/apol/compiler"
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"

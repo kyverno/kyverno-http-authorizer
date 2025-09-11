@@ -3,7 +3,7 @@ package http
 import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/utils"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )

@@ -5,8 +5,8 @@ import (
 	"net"
 
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

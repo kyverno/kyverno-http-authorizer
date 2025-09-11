@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package validatingpolicy.v1alpha1;
+
+option go_package = "github.com/kyverno/kyverno-http-authorizer;regionmanagerv1";

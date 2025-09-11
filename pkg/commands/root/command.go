@@ -1,7 +1,7 @@
 package root
 
 import (
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/commands/serve"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve"
 	"github.com/spf13/cobra"
 )
 

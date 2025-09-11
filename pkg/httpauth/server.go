@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/server"
 )
 
 func NewServer(addr string, provider engine.Provider) server.ServerFunc {

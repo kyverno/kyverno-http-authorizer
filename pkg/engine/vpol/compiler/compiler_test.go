@@ -5,8 +5,8 @@ import (
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/stretchr/testify/assert"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 )
