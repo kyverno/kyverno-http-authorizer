@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             (unknown)
-// source: validating_policy_spec.proto
+// source: validatingpolicy.proto
 
 package v1alpha1
 
@@ -28,7 +28,6 @@ const (
 //
 // ValidatingPolicyService provides bidirectional communication for validating policies
 type ValidatingPolicyServiceClient interface {
-	// Bidirectional streaming: Real-time policy validation and feedback
 	ValidatePoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyRequest, ValidatingPolicyResponse], error)
 }
 
@@ -59,7 +58,6 @@ type ValidatingPolicyService_ValidatePoliciesStreamClient = grpc.BidiStreamingCl
 //
 // ValidatingPolicyService provides bidirectional communication for validating policies
 type ValidatingPolicyServiceServer interface {
-	// Bidirectional streaming: Real-time policy validation and feedback
 	ValidatePoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyRequest, ValidatingPolicyResponse]) error
 	mustEmbedUnimplementedValidatingPolicyServiceServer()
 }
@@ -118,5 +116,5 @@ var ValidatingPolicyService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "validating_policy_spec.proto",
+	Metadata: "validatingpolicy.proto",
 }

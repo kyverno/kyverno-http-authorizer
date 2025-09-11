@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package kyverno.http.v1alpha1;
+
+option go_package = "github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1";
+
+import "google/protobuf/wrappers.proto";
+
+// ValidatingPolicySpec defines the desired behavior of the ValidatingPolicy.
+message ValidatingPolicySpec {
+  // CEL expressions for validation. At least one validation or audit annotation is required.
+  repeated Validation validations = 2;
+
+  // How to handle policy failures. Defaults to Fail.
+  optional FailurePolicyType failure_policy = 3;
+
+  // Conditions that must be met for validation. Maximum 64 conditions.
+  repeated MatchCondition match_conditions = 5;
+
+  // Variable definitions available in policy expressions (except MatchConditions).
+  repeated Variable variables = 6;
+
+  // Actions to take when validation fails. Required.
+  repeated ValidationAction validation_actions = 8;
+}
+
+// FailurePolicyType defines failure handling behavior
+enum FailurePolicyType {
+  FAILURE_POLICY_TYPE_UNSPECIFIED = 0;
+  FAILURE_POLICY_TYPE_IGNORE = 1;
+  FAILURE_POLICY_TYPE_FAIL = 2;
+}
+
+// ValidationAction defines actions for policy violations
+enum ValidationAction {
+  VALIDATION_ACTION_UNSPECIFIED = 0;
+  VALIDATION_ACTION_DENY = 1;
+  VALIDATION_ACTION_AUDIT = 2;
+  VALIDATION_ACTION_WARN = 3;
+}
+
+// MatchPolicyType defines resource matching behavior
+enum MatchPolicyType {
+  MATCH_POLICY_TYPE_UNSPECIFIED = 0;
+  MATCH_POLICY_TYPE_EXACT = 1;
+  MATCH_POLICY_TYPE_EQUIVALENT = 2;
+}
+
+
+// Validation represents a validation rule
+message Validation {
+  // CEL expression to evaluate. See: https://github.com/google/cel-spec
+  string expression = 1;
+
+  // Failure message. Required if expression contains line breaks.
+  optional string message = 2;
+
+  // Machine-readable failure reason. Must be valid HTTP error reason.
+  optional string reason = 3;
+
+  // CEL expression for dynamic failure messages. Takes precedence over message.
+  optional string message_expression = 4;
+}
+
+// MatchCondition represents a condition that must be met for a request to be validated
+message MatchCondition {
+  // Qualified identifier for the condition.
+  string name = 1;
+
+  // CEL expression that must evaluate to bool.
+  string expression = 2;
+}
+
+// Variable represents a variable definition
+message Variable {
+  // Unique CEL identifier. Accessible as `variables.{name}`.
+  string name = 1;
+
+  // CEL expression defining the variable value.
+  string expression = 2;
+}
+
+// Request message for validating policy operations
+message ValidatingPolicyRequest {
+  ValidatingPolicySpec spec = 1;
+  map<string, string> metadata = 2;
+  string request_id = 3;
+}
+
+// Response message for validating policy operations
+message ValidatingPolicyResponse {
+  bool success = 1;
+  string message = 2;
+  map<string, string> metadata = 3;
+  string request_id = 4;
+}
+
+// ValidatingPolicyService provides bidirectional communication for validating policies
+service ValidatingPolicyService {
+  rpc ValidatePoliciesStream(stream ValidatingPolicyRequest) returns (stream ValidatingPolicyResponse);
+}
