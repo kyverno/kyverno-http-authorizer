@@ -92,5 +92,5 @@ message ValidatingPolicyStreamRequest {
 
 // ValidatingPolicyService provides bidirectional communication for validating policies
 service ValidatingPolicyService {
-  rpc ValidatePoliciesStream(ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
+  rpc ValidatePoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
 }

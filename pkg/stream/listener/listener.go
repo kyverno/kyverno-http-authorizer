@@ -21,7 +21,7 @@ type PolicyListener struct {
 	controlPlaneAddr string
 	client           protov1alpha1.ValidatingPolicyServiceClient
 	conn             *grpc.ClientConn
-	stream           grpc.ServerStreamingClient[protov1alpha1.ValidatingPolicy]
+	stream           grpc.BidiStreamingClient[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
 	ctx              context.Context
 	cancel           context.CancelFunc
 	wg               sync.WaitGroup // ammar: check if you can remove this wait group
@@ -94,7 +94,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 	l.logger.Info("Establishing validation channel...")
 
 	// Establish the stream
-	stream, err := l.client.ValidatePoliciesStream(ctx, &protov1alpha1.ValidatingPolicyStreamRequest{})
+	stream, err := l.client.ValidatePoliciesStream(ctx)
 	if err != nil {
 		return err
 	}

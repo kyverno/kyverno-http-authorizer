@@ -588,9 +588,9 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x0fMatchPolicyType\x12!\n" +
 	"\x1dMATCH_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17MATCH_POLICY_TYPE_EXACT\x10\x01\x12 \n" +
-	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\x94\x01\n" +
-	"\x17ValidatingPolicyService\x12y\n" +
-	"\x16ValidatePoliciesStream\x124.kyverno.http.v1alpha1.ValidatingPolicyStreamRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy0\x01B@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
+	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\x96\x01\n" +
+	"\x17ValidatingPolicyService\x12{\n" +
+	"\x16ValidatePoliciesStream\x124.kyverno.http.v1alpha1.ValidatingPolicyStreamRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy(\x010\x01B@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
 
 var (
 	file_validatingpolicy_proto_rawDescOnce sync.Once

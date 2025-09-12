@@ -9,3 +9,7 @@ type PolicySender struct {
 	clients    map[string]grpc.ClientConn
 	policyChan chan engine.CompiledPolicy
 }
+
+func NewPolicySender() *PolicySender {
+	return &PolicySender{}
+}
