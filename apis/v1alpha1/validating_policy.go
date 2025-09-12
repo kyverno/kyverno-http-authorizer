@@ -281,7 +281,7 @@ func NewFromProto(pol *protov1alpha1.ValidatingPolicy) *ValidatingPolicy {
 		})
 	}
 	var fp admissionregistrationv1.FailurePolicyType
-	switch int32(*pol.Spec.FailurePolicy) {
+	switch int32(*pol.Spec.FailurePolicy) { // ammar: check if this field should be a string
 	case 1:
 		fp = "Ignore"
 	case 2:
