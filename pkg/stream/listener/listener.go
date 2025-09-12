@@ -48,7 +48,7 @@ func (l *PolicyListener) CompiledPolicies(ctx context.Context) ([]engine.Compile
 	return l.sortPolicies(), nil
 }
 
-func (l *PolicyListener) Start(stop chan struct{}) error {
+func (l *PolicyListener) Start() error {
 	err := l.dial()
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 	l.logger.Info("Establishing validation channel...")
 
 	// Establish the stream
-	stream, err := l.client.ValidatePoliciesStream(ctx)
+	stream, err := l.client.ValidatingPoliciesStream(ctx)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 			return mapToSortedSlice(l.policies)
 		})
 	}
-	vpol := v1alpha1.NewFromProto(req)
+	vpol := v1alpha1.FromProto(req)
 	compiledPolicy, err := l.compiler.Compile(vpol)
 	if err != nil {
 		l.logger.Errorf("failed to compile policy %s: %s", req.Name, err)

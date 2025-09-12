@@ -3,12 +3,14 @@ module github.com/kyverno/kyverno-http-authorizer
 go 1.24.7
 
 require (
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4
 	github.com/google/cel-go v0.26.1
 	github.com/hairyhenderson/go-fsimpl v0.3.1
 	github.com/kyverno/kyverno v1.15.1
 	github.com/kyverno/pkg/ext v0.0.0-20250303002756-48769d003e55
 	github.com/lestrrat-go/jwx/v3 v3.0.10
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
@@ -56,7 +58,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/vbatts/tar-split v0.11.6 // indirect
 )
 

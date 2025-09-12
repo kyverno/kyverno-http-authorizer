@@ -13,9 +13,10 @@ import (
 	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/httpauth"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/stream/sender"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,7 +42,7 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// track errors
-				var httpErr, grpcErr, mgrErr, httpAuthErr error
+				var httpErr, grpcErr, mgrErr error
 				err := func(ctx context.Context) error {
 					// create a rest config
 					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -61,13 +62,8 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
-					vpolCompiler := vpolcompiler.NewCompiler()
-					// create external providers
-					externalProviders, err := getExternalProviders(vpolCompiler, externalPolicySources...)
-					if err != nil {
-						return err
-					}
-					provider := genericproviders.NewComposite(externalProviders...)
+					logger := logrus.New()
+					s := sender.NewPolicySender(ctx, logger)
 					// if kube policy source is enabled
 					if kubePolicySource {
 						// create a controller manager
@@ -85,12 +81,10 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create kube providers
-						vpolProvider, err := vpolprovider.NewKubeProvider(mgr, vpolCompiler)
+						_, err = vpolprovider.NewKubeProvider(mgr, s)
 						if err != nil {
 							return err
 						}
-						// create final provider
-						provider = genericproviders.NewComposite(vpolProvider, provider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -104,9 +98,8 @@ func Command() *cobra.Command {
 					}
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
-					grpc := authz.NewServer(grpcNetwork, grpcAddress, provider)
+					grpc := authz.NewServer(grpcNetwork, grpcAddress, s)
 
-					httpAuth := httpauth.NewServer(httpAuthAddress, provider)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
@@ -116,16 +109,11 @@ func Command() *cobra.Command {
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// cancel context at the end
 						defer cancel()
-						httpAuthErr = httpAuth.Run(ctx)
-					})
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
-						defer cancel()
 						grpcErr = grpc.Run(ctx)
 					})
 					return nil
 				}(ctx)
-				return multierr.Combine(err, httpErr, grpcErr, mgrErr, httpAuthErr)
+				return multierr.Combine(err, httpErr, grpcErr, mgrErr)
 			})
 		},
 	}
@@ -143,8 +131,6 @@ func Command() *cobra.Command {
 func getExternalProviders(vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
-	// mux.Add(httpfs.FS)
-	// mux.Add(blobfs.FS)
 	mux.Add(gitfs.FS)
 	var providers []engine.Provider
 	for _, url := range urls {

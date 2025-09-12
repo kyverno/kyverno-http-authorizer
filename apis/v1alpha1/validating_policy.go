@@ -255,7 +255,49 @@ type WebhookConfiguration struct {
 	TimeoutSeconds *int32 `json:"timeoutSeconds,omitempty"`
 }
 
-func NewFromProto(pol *protov1alpha1.ValidatingPolicy) *ValidatingPolicy {
+func ToProto(pol *ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
+	validations := []*protov1alpha1.Validation{}
+	for _, v := range pol.Spec.Validations {
+		validations = append(validations, &protov1alpha1.Validation{
+			Expression: v.Expression,
+			Message:    &v.Message,
+			Reason:     (*string)(v.Reason),
+		})
+	}
+	variables := []*protov1alpha1.Variable{}
+	for _, v := range pol.Spec.Variables {
+		variables = append(variables,
+			&protov1alpha1.Variable{
+				Name:       v.Name,
+				Expression: v.Expression,
+			},
+		)
+	}
+	matchConds := []*protov1alpha1.MatchCondition{}
+	for _, m := range pol.Spec.MatchConditions {
+		matchConds = append(matchConds, &protov1alpha1.MatchCondition{
+			Name:       m.Name,
+			Expression: m.Expression,
+		})
+	}
+	var fp protov1alpha1.FailurePolicyType
+	switch string(*pol.Spec.FailurePolicy) {
+	case "Ignore":
+		fp = 1
+	case "Fail":
+		fp = 2
+	}
+	return &protov1alpha1.ValidatingPolicy{
+		Spec: &protov1alpha1.ValidatingPolicySpec{
+			Validations:     validations,
+			Variables:       variables,
+			MatchConditions: matchConds,
+			FailurePolicy:   &fp,
+		},
+	}
+}
+
+func FromProto(pol *protov1alpha1.ValidatingPolicy) *ValidatingPolicy {
 	validations := []admissionregistrationv1.Validation{}
 	for _, v := range pol.Spec.Validations {
 		validations = append(validations, admissionregistrationv1.Validation{

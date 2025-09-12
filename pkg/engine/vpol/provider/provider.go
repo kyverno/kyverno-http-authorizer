@@ -9,15 +9,15 @@ import (
 
 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/stream/sender"
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provider, error) {
-	r := newPolicyReconciler(mgr.GetClient(), compiler)
+func NewKubeProvider(mgr ctrl.Manager, sender *sender.PolicySender) (*policyReconciler, error) {
+	r := newPolicyReconciler(mgr.GetClient(), sender)
 	if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 		return nil, fmt.Errorf("failed to construct manager: %w", err)
 	}
@@ -26,18 +26,17 @@ func NewKubeProvider(mgr ctrl.Manager, compiler compiler.Compiler) (engine.Provi
 
 type policyReconciler struct {
 	client       client.Client
-	compiler     compiler.Compiler
 	lock         *sync.Mutex
 	policies     map[string]engine.CompiledPolicy
 	sortPolicies func() []engine.CompiledPolicy
+	polSender    *sender.PolicySender
 }
 
-func newPolicyReconciler(client client.Client, compiler compiler.Compiler) *policyReconciler {
+func newPolicyReconciler(client client.Client, sender *sender.PolicySender) *policyReconciler {
 	return &policyReconciler{
-		client:   client,
-		compiler: compiler,
-		lock:     &sync.Mutex{},
-		policies: map[string]engine.CompiledPolicy{},
+		client:    client,
+		lock:      &sync.Mutex{},
+		polSender: sender,
 		sortPolicies: func() []engine.CompiledPolicy {
 			return nil
 		},
@@ -78,19 +77,6 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	compiled, errs := r.compiler.Compile(&policy)
-	if len(errs) > 0 {
-		fmt.Println(errs)
-		// No need to retry it
-		return ctrl.Result{}, nil
-	}
-	r.lock.Lock()
-	defer r.lock.Unlock()
-	r.policies[req.String()] = compiled
-	resetSortPolicies()
+	go r.polSender.SendPolicy(&policy)
 	return ctrl.Result{}, nil
-}
-
-func (r *policyReconciler) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
-	return slices.Clone(r.sortPolicies()), nil
 }
