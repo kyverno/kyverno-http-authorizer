@@ -9,12 +9,12 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	authzcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/cel/utils"
+	authzcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/utils"
 
-	httpauth "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine/variables"
+	httpauth "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/variables"
 
 	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"

@@ -1,6 +1,6 @@
-# kyverno-envoy-plugin
+# kyverno-http-authorizer
 
-A plugin to enforce kyverno policies with Envoy. This plugin allows applying Kyverno policies to APIs managed by Envoy.
+Authenticate HTTP requests using kyverno validating policies in a sidecar architecture
 
 ## Overview 
 

@@ -6,11 +6,10 @@ import (
 	"io/fs"
 	"sync"
 
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/data"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
-	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/data"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/pkg/ext/file"
 	"github.com/kyverno/pkg/ext/resource/convert"
 	"github.com/kyverno/pkg/ext/resource/loader"
@@ -19,7 +18,6 @@ import (
 )
 
 var (
-	apol = v1alpha1.SchemeGroupVersion.WithKind("AuthorizationPolicy")
 	vpol = v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy")
 )
 
@@ -37,14 +35,12 @@ func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
 
 type fsProvider struct {
-	apolCompiler apolcompiler.Compiler
 	vpolCompiler vpolcompiler.Compiler
 	fs           fs.FS
 }
 
-func NewFsProvider(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
+func NewFsProvider(vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
 	return &fsProvider{
-		apolCompiler: apolCompiler,
 		vpolCompiler: vpolCompiler,
 		fs:           fs,
 	}
@@ -80,16 +76,6 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 				continue
 			}
 			switch gvk {
-			case apol:
-				typed, err := convert.To[v1alpha1.AuthorizationPolicy](untyped)
-				if err != nil {
-					return nil, fmt.Errorf("failed to convert to AuthorizationPolicy: %w", err)
-				}
-				compiled, errs := p.apolCompiler.Compile(typed)
-				if len(errs) > 0 {
-					return nil, fmt.Errorf("failed to compile AuthorizationPolicy: %w", err)
-				}
-				policies = append(policies, compiled)
 			case vpol:
 				typed, err := convert.To[v1alpha1.ValidatingPolicy](untyped)
 				if err != nil {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"net"
 
-	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/server"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/server"
+	"github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -20,7 +20,7 @@ func NewServer(network, addr string, provider engine.Provider) server.ServerFunc
 			provider: provider,
 		}
 		// register our authorization service
-		authv3.RegisterAuthorizationServer(s, svc)
+		v1alpha1.RegisterValidatingPolicyServiceServer(s, svc)
 		reflection.Register(s)
 		// create a listener
 		l, err := net.Listen(network, addr)

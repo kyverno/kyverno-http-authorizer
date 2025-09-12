@@ -7,17 +7,15 @@ import (
 	"github.com/hairyhenderson/go-fsimpl"
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
-	"github.com/kyverno/kyverno-envoy-plugin/apis/v1alpha1"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/authz"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
-	apolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/compiler"
-	apolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/apol/provider"
-	genericproviders "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/providers"
-	vpolcompiler "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/compiler"
-	vpolprovider "github.com/kyverno/kyverno-envoy-plugin/pkg/engine/vpol/provider"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/httpauth"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/probes"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/signals"
+	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/authz"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
+	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
+	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/httpauth"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,11 +60,10 @@ func Command() *cobra.Command {
 					var group wait.Group
 					// wait all tasks in the group are over
 					defer group.Wait()
-					// create compilers
-					apolCompiler := apolcompiler.NewCompiler()
+
 					vpolCompiler := vpolcompiler.NewCompiler()
 					// create external providers
-					externalProviders, err := getExternalProviders(apolCompiler, vpolCompiler, externalPolicySources...)
+					externalProviders, err := getExternalProviders(vpolCompiler, externalPolicySources...)
 					if err != nil {
 						return err
 					}
@@ -88,16 +85,12 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create kube providers
-						apolProvider, err := apolprovider.NewKubeProvider(mgr, apolCompiler)
-						if err != nil {
-							return err
-						}
 						vpolProvider, err := vpolprovider.NewKubeProvider(mgr, vpolCompiler)
 						if err != nil {
 							return err
 						}
 						// create final provider
-						provider = genericproviders.NewComposite(apolProvider, vpolProvider, provider)
+						provider = genericproviders.NewComposite(vpolProvider, provider)
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {
 							// cancel context at the end
@@ -147,7 +140,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+func getExternalProviders(vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	// mux.Add(httpfs.FS)
@@ -159,7 +152,7 @@ func getExternalProviders(apolCompiler apolcompiler.Compiler, vpolCompiler vpolc
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, genericproviders.NewFsProvider(apolCompiler, vpolCompiler, fsys))
+		providers = append(providers, genericproviders.NewFsProvider(vpolCompiler, fsys))
 	}
 	return providers, nil
 }

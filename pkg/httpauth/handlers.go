@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	httpcel "github.com/kyverno/kyverno-envoy-plugin/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	httpcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 )
 
 type Authorizer struct {

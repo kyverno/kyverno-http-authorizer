@@ -3,7 +3,7 @@ package providers
 import (
 	"context"
 
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 )
 
 type composite []engine.Provider

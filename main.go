@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/kyverno/kyverno-envoy-plugin/pkg/commands/root"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/commands/root"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )

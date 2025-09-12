@@ -1,4 +1,4 @@
-module github.com/kyverno/kyverno-envoy-plugin
+module github.com/kyverno/kyverno-http-authorizer
 
 go 1.24.7
 
