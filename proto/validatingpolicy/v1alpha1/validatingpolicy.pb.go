@@ -441,29 +441,28 @@ func (x *Variable) GetExpression() string {
 }
 
 // Request message for validating policy operations
-type ValidatingPolicyRequest struct {
+type ValidatingPolicy struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Spec          *ValidatingPolicySpec  `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,2,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	RequestId     string                 `protobuf:"bytes,3,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Spec          *ValidatingPolicySpec  `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ValidatingPolicyRequest) Reset() {
-	*x = ValidatingPolicyRequest{}
+func (x *ValidatingPolicy) Reset() {
+	*x = ValidatingPolicy{}
 	mi := &file_validatingpolicy_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ValidatingPolicyRequest) String() string {
+func (x *ValidatingPolicy) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ValidatingPolicyRequest) ProtoMessage() {}
+func (*ValidatingPolicy) ProtoMessage() {}
 
-func (x *ValidatingPolicyRequest) ProtoReflect() protoreflect.Message {
+func (x *ValidatingPolicy) ProtoReflect() protoreflect.Message {
 	mi := &file_validatingpolicy_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -475,57 +474,46 @@ func (x *ValidatingPolicyRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidatingPolicyRequest.ProtoReflect.Descriptor instead.
-func (*ValidatingPolicyRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ValidatingPolicy.ProtoReflect.Descriptor instead.
+func (*ValidatingPolicy) Descriptor() ([]byte, []int) {
 	return file_validatingpolicy_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ValidatingPolicyRequest) GetSpec() *ValidatingPolicySpec {
+func (x *ValidatingPolicy) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ValidatingPolicy) GetSpec() *ValidatingPolicySpec {
 	if x != nil {
 		return x.Spec
 	}
 	return nil
 }
 
-func (x *ValidatingPolicyRequest) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-func (x *ValidatingPolicyRequest) GetRequestId() string {
-	if x != nil {
-		return x.RequestId
-	}
-	return ""
-}
-
-// Response message for validating policy operations
-type ValidatingPolicyResponse struct {
+type ValidatingPolicyStreamRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	RequestId     string                 `protobuf:"bytes,4,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	ClientAddress string                 `protobuf:"bytes,1,opt,name=client_address,json=clientAddress,proto3" json:"client_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ValidatingPolicyResponse) Reset() {
-	*x = ValidatingPolicyResponse{}
+func (x *ValidatingPolicyStreamRequest) Reset() {
+	*x = ValidatingPolicyStreamRequest{}
 	mi := &file_validatingpolicy_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ValidatingPolicyResponse) String() string {
+func (x *ValidatingPolicyStreamRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ValidatingPolicyResponse) ProtoMessage() {}
+func (*ValidatingPolicyStreamRequest) ProtoMessage() {}
 
-func (x *ValidatingPolicyResponse) ProtoReflect() protoreflect.Message {
+func (x *ValidatingPolicyStreamRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_validatingpolicy_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -537,35 +525,14 @@ func (x *ValidatingPolicyResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ValidatingPolicyResponse.ProtoReflect.Descriptor instead.
-func (*ValidatingPolicyResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ValidatingPolicyStreamRequest.ProtoReflect.Descriptor instead.
+func (*ValidatingPolicyStreamRequest) Descriptor() ([]byte, []int) {
 	return file_validatingpolicy_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ValidatingPolicyResponse) GetSuccess() bool {
+func (x *ValidatingPolicyStreamRequest) GetClientAddress() string {
 	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *ValidatingPolicyResponse) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *ValidatingPolicyResponse) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-func (x *ValidatingPolicyResponse) GetRequestId() string {
-	if x != nil {
-		return x.RequestId
+		return x.ClientAddress
 	}
 	return ""
 }
@@ -603,24 +570,12 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"expression\x18\x02 \x01(\tR\n" +
-	"expression\"\x90\x02\n" +
-	"\x17ValidatingPolicyRequest\x12?\n" +
-	"\x04spec\x18\x01 \x01(\v2+.kyverno.http.v1alpha1.ValidatingPolicySpecR\x04spec\x12X\n" +
-	"\bmetadata\x18\x02 \x03(\v2<.kyverno.http.v1alpha1.ValidatingPolicyRequest.MetadataEntryR\bmetadata\x12\x1d\n" +
-	"\n" +
-	"request_id\x18\x03 \x01(\tR\trequestId\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x85\x02\n" +
-	"\x18ValidatingPolicyResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12Y\n" +
-	"\bmetadata\x18\x03 \x03(\v2=.kyverno.http.v1alpha1.ValidatingPolicyResponse.MetadataEntryR\bmetadata\x12\x1d\n" +
-	"\n" +
-	"request_id\x18\x04 \x01(\tR\trequestId\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01*v\n" +
+	"expression\"g\n" +
+	"\x10ValidatingPolicy\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
+	"\x04spec\x18\x02 \x01(\v2+.kyverno.http.v1alpha1.ValidatingPolicySpecR\x04spec\"F\n" +
+	"\x1dValidatingPolicyStreamRequest\x12%\n" +
+	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress*v\n" +
 	"\x11FailurePolicyType\x12#\n" +
 	"\x1fFAILURE_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aFAILURE_POLICY_TYPE_IGNORE\x10\x01\x12\x1c\n" +
@@ -633,9 +588,9 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x0fMatchPolicyType\x12!\n" +
 	"\x1dMATCH_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17MATCH_POLICY_TYPE_EXACT\x10\x01\x12 \n" +
-	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\x98\x01\n" +
-	"\x17ValidatingPolicyService\x12}\n" +
-	"\x16ValidatePoliciesStream\x12..kyverno.http.v1alpha1.ValidatingPolicyRequest\x1a/.kyverno.http.v1alpha1.ValidatingPolicyResponse(\x010\x01B@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
+	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\x94\x01\n" +
+	"\x17ValidatingPolicyService\x12y\n" +
+	"\x16ValidatePoliciesStream\x124.kyverno.http.v1alpha1.ValidatingPolicyStreamRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy0\x01B@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
 
 var (
 	file_validatingpolicy_proto_rawDescOnce sync.Once
@@ -650,36 +605,32 @@ func file_validatingpolicy_proto_rawDescGZIP() []byte {
 }
 
 var file_validatingpolicy_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_validatingpolicy_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_validatingpolicy_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_validatingpolicy_proto_goTypes = []any{
-	(FailurePolicyType)(0),           // 0: kyverno.http.v1alpha1.FailurePolicyType
-	(ValidationAction)(0),            // 1: kyverno.http.v1alpha1.ValidationAction
-	(MatchPolicyType)(0),             // 2: kyverno.http.v1alpha1.MatchPolicyType
-	(*ValidatingPolicySpec)(nil),     // 3: kyverno.http.v1alpha1.ValidatingPolicySpec
-	(*Validation)(nil),               // 4: kyverno.http.v1alpha1.Validation
-	(*MatchCondition)(nil),           // 5: kyverno.http.v1alpha1.MatchCondition
-	(*Variable)(nil),                 // 6: kyverno.http.v1alpha1.Variable
-	(*ValidatingPolicyRequest)(nil),  // 7: kyverno.http.v1alpha1.ValidatingPolicyRequest
-	(*ValidatingPolicyResponse)(nil), // 8: kyverno.http.v1alpha1.ValidatingPolicyResponse
-	nil,                              // 9: kyverno.http.v1alpha1.ValidatingPolicyRequest.MetadataEntry
-	nil,                              // 10: kyverno.http.v1alpha1.ValidatingPolicyResponse.MetadataEntry
+	(FailurePolicyType)(0),                // 0: kyverno.http.v1alpha1.FailurePolicyType
+	(ValidationAction)(0),                 // 1: kyverno.http.v1alpha1.ValidationAction
+	(MatchPolicyType)(0),                  // 2: kyverno.http.v1alpha1.MatchPolicyType
+	(*ValidatingPolicySpec)(nil),          // 3: kyverno.http.v1alpha1.ValidatingPolicySpec
+	(*Validation)(nil),                    // 4: kyverno.http.v1alpha1.Validation
+	(*MatchCondition)(nil),                // 5: kyverno.http.v1alpha1.MatchCondition
+	(*Variable)(nil),                      // 6: kyverno.http.v1alpha1.Variable
+	(*ValidatingPolicy)(nil),              // 7: kyverno.http.v1alpha1.ValidatingPolicy
+	(*ValidatingPolicyStreamRequest)(nil), // 8: kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
 }
 var file_validatingpolicy_proto_depIdxs = []int32{
-	4,  // 0: kyverno.http.v1alpha1.ValidatingPolicySpec.validations:type_name -> kyverno.http.v1alpha1.Validation
-	0,  // 1: kyverno.http.v1alpha1.ValidatingPolicySpec.failure_policy:type_name -> kyverno.http.v1alpha1.FailurePolicyType
-	5,  // 2: kyverno.http.v1alpha1.ValidatingPolicySpec.match_conditions:type_name -> kyverno.http.v1alpha1.MatchCondition
-	6,  // 3: kyverno.http.v1alpha1.ValidatingPolicySpec.variables:type_name -> kyverno.http.v1alpha1.Variable
-	1,  // 4: kyverno.http.v1alpha1.ValidatingPolicySpec.validation_actions:type_name -> kyverno.http.v1alpha1.ValidationAction
-	3,  // 5: kyverno.http.v1alpha1.ValidatingPolicyRequest.spec:type_name -> kyverno.http.v1alpha1.ValidatingPolicySpec
-	9,  // 6: kyverno.http.v1alpha1.ValidatingPolicyRequest.metadata:type_name -> kyverno.http.v1alpha1.ValidatingPolicyRequest.MetadataEntry
-	10, // 7: kyverno.http.v1alpha1.ValidatingPolicyResponse.metadata:type_name -> kyverno.http.v1alpha1.ValidatingPolicyResponse.MetadataEntry
-	7,  // 8: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatePoliciesStream:input_type -> kyverno.http.v1alpha1.ValidatingPolicyRequest
-	8,  // 9: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatePoliciesStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicyResponse
-	9,  // [9:10] is the sub-list for method output_type
-	8,  // [8:9] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	4, // 0: kyverno.http.v1alpha1.ValidatingPolicySpec.validations:type_name -> kyverno.http.v1alpha1.Validation
+	0, // 1: kyverno.http.v1alpha1.ValidatingPolicySpec.failure_policy:type_name -> kyverno.http.v1alpha1.FailurePolicyType
+	5, // 2: kyverno.http.v1alpha1.ValidatingPolicySpec.match_conditions:type_name -> kyverno.http.v1alpha1.MatchCondition
+	6, // 3: kyverno.http.v1alpha1.ValidatingPolicySpec.variables:type_name -> kyverno.http.v1alpha1.Variable
+	1, // 4: kyverno.http.v1alpha1.ValidatingPolicySpec.validation_actions:type_name -> kyverno.http.v1alpha1.ValidationAction
+	3, // 5: kyverno.http.v1alpha1.ValidatingPolicy.spec:type_name -> kyverno.http.v1alpha1.ValidatingPolicySpec
+	8, // 6: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatePoliciesStream:input_type -> kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
+	7, // 7: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatePoliciesStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicy
+	7, // [7:8] is the sub-list for method output_type
+	6, // [6:7] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_validatingpolicy_proto_init() }
@@ -695,7 +646,7 @@ func file_validatingpolicy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_validatingpolicy_proto_rawDesc), len(file_validatingpolicy_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   8,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -252,4 +253,49 @@ type WebhookConfiguration struct {
 	// After the configured time expires, the admission request may fail, or may simply ignore the policy results,
 	// based on the failure policy. The default timeout is 10s, the value must be between 1 and 30 seconds.
 	TimeoutSeconds *int32 `json:"timeoutSeconds,omitempty"`
+}
+
+func NewFromProto(pol *protov1alpha1.ValidatingPolicy) *ValidatingPolicy {
+	validations := []admissionregistrationv1.Validation{}
+	for _, v := range pol.Spec.Validations {
+		validations = append(validations, admissionregistrationv1.Validation{
+			Expression: v.Expression,
+			Message:    *v.Message,
+			Reason:     (*metav1.StatusReason)(v.Reason),
+		})
+	}
+	variables := []admissionregistrationv1.Variable{}
+	for _, v := range pol.Spec.Variables {
+		variables = append(variables,
+			admissionregistrationv1.Variable{
+				Name:       v.Name,
+				Expression: v.Expression,
+			},
+		)
+	}
+	matchConds := []admissionregistrationv1.MatchCondition{}
+	for _, m := range pol.Spec.MatchConditions {
+		matchConds = append(matchConds, admissionregistrationv1.MatchCondition{
+			Name:       m.Name,
+			Expression: m.Expression,
+		})
+	}
+	var fp admissionregistrationv1.FailurePolicyType
+	switch int32(*pol.Spec.FailurePolicy) {
+	case 1:
+		fp = "Ignore"
+	case 2:
+		fp = "Fail"
+	}
+	return &ValidatingPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pol.Name,
+		},
+		Spec: ValidatingPolicySpec{
+			Validations:     validations,
+			Variables:       variables,
+			MatchConditions: matchConds,
+			FailurePolicy:   &fp,
+		},
+	}
 }

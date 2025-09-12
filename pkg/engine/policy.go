@@ -12,6 +12,5 @@ type PolicyFunc func() (*authv3.CheckResponse, error)
 type RequestFunc func() (*httpcel.Response, error)
 
 type CompiledPolicy interface {
-	ForEnvoy(r *authv3.CheckRequest) (PolicyFunc, PolicyFunc)
 	ForHTTP(r *http.Request) RequestFunc
 }
