@@ -78,7 +78,6 @@ func (l *PolicyListener) Stop() {
 
 func (l *PolicyListener) dial() error {
 	l.logger.Infof("Connecting to control plane at %s", l.controlPlaneAddr)
-
 	// Create connection to the control plane
 	conn, err := grpc.NewClient(l.controlPlaneAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -89,19 +88,6 @@ func (l *PolicyListener) dial() error {
 	l.client = protov1alpha1.NewValidatingPolicyServiceClient(conn)
 
 	return nil
-}
-
-func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
-	if in == nil {
-		return nil
-	}
-	out := make([]V, 0, len(in))
-	keys := maps.Keys(in)
-	slices.Sort(keys)
-	for _, key := range keys {
-		out = append(out, in[key])
-	}
-	return out
 }
 
 func (l *PolicyListener) listen(ctx context.Context) error {
@@ -161,4 +147,17 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 	defer l.mu.Unlock()
 	l.policies[req.Name] = compiledPolicy
 	resetSortPolicies()
+}
+
+func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
+	if in == nil {
+		return nil
+	}
+	out := make([]V, 0, len(in))
+	keys := maps.Keys(in)
+	slices.Sort(keys)
+	for _, key := range keys {
+		out = append(out, in[key])
+	}
+	return out
 }
