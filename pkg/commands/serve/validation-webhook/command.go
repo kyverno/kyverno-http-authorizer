@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
-	apolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/apol/compiler"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
@@ -60,13 +59,6 @@ func Command() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to construct manager: %w", err)
 					}
-					// create apol compiler
-					apolCompiler := apolcompiler.NewCompiler()
-					apolCompileFunc := func(policy *v1alpha1.AuthorizationPolicy) field.ErrorList {
-						_, err := apolCompiler.Compile(policy)
-						fmt.Println("authorization policy", policy.Name, err)
-						return err
-					}
 					// create vpol compiler
 					vpolCompiler := vpolcompiler.NewCompiler()
 					vpolCompileFunc := func(policy *v1alpha1.ValidatingPolicy) field.ErrorList {
@@ -74,11 +66,7 @@ func Command() *cobra.Command {
 						fmt.Println("validating policy", policy.Name, err)
 						return err
 					}
-					v := validation.NewValidator(apolCompileFunc, vpolCompileFunc)
-
-					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.AuthorizationPolicy{}).WithValidator(v).Complete(); err != nil {
-						return fmt.Errorf("failed to create webhook: %w", err)
-					}
+					v := validation.NewValidator(vpolCompileFunc)
 					if err := ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).WithValidator(v).Complete(); err != nil {
 						return fmt.Errorf("failed to create webhook: %w", err)
 					}
