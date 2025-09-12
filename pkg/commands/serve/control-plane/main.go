@@ -128,6 +128,7 @@ func Command() *cobra.Command {
 	return command
 }
 
+// ammar: bring this back
 func getExternalProviders(vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
