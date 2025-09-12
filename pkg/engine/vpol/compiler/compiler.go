@@ -7,7 +7,6 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel"
-	envoy "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/envoy"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
@@ -43,11 +42,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}
 
 	varsProvider := authzcel.NewVariablesProvider(base.CELTypeProvider())
-	if policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeHTTP {
-		objKey = cel.Variable(ObjectKey, http.RequestType)
-	} else {
-		objKey = cel.Variable(ObjectKey, envoy.CheckRequest)
-	}
+	objKey = cel.Variable(ObjectKey, http.RequestType)
 
 	env, err := base.Extend(
 		objKey,
@@ -129,11 +124,6 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 		case v1alpha1.EvaluationModeHTTP:
 			if !ast.OutputType().IsExactType(http.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
 				msg := fmt.Sprintf("rule response output is expected to be of type %s", http.ResponseType.TypeName())
-				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
-			}
-		case v1alpha1.EvaluationModeEnvoy:
-			if !ast.OutputType().IsExactType(envoy.CheckResponse) && !ast.OutputType().IsExactType(types.NullType) {
-				msg := fmt.Sprintf("rule response output is expected to be of type %s or %s", envoy.OkHttpResponse.TypeName(), envoy.DeniedHttpResponse.TypeName())
 				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 			}
 		}

@@ -7,8 +7,8 @@ import (
 
 func Command() *cobra.Command {
 	root := &cobra.Command{
-		Use:   "kyverno-envoy-plugin",
-		Short: "kyverno-envoy-plugin is a plugin for Envoy",
+		Use:   "kyverno-http-authorizer",
+		Short: "kyverno-http-authorizer is a plugin for HTTP authorization",
 	}
 	root.AddCommand(serve.Command())
 	return root
