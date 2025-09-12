@@ -16,7 +16,6 @@ import (
 
 func Command() *cobra.Command {
 	var probesAddress string
-	var metricsAddress string
 	var httpAuthAddress string
 	var controlPlaneAddr string
 	command := &cobra.Command{
@@ -66,8 +65,9 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
+	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
-	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
+	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
+	_ = command.MarkFlagRequired("control-plane-address")
 	return command
 }

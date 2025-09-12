@@ -109,6 +109,10 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 				l.logger.Info("Stopping policy listener due to context cancellation")
 				return
 			default:
+				if err := stream.Send(&protov1alpha1.ValidatingPolicyStreamRequest{ClientAddress: "test:9092"}); err != nil { // ammar: get client address properly
+					l.logger.Error("Error sending to stream")
+					return
+				}
 				req, err := l.stream.Recv()
 				if err == io.EOF {
 					l.logger.Info("Policy sender closed the stream")
@@ -126,6 +130,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 	}()
 
 	l.logger.Info("Policy listener running...")
+	l.wg.Wait()
 	return nil
 }
 
