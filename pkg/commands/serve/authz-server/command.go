@@ -18,6 +18,8 @@ func Command() *cobra.Command {
 	var probesAddress string
 	var httpAuthAddress string
 	var controlPlaneAddr string
+	var controlPlaneReconnectWait int
+	var controlPlaneMaxDialInterval int
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -42,7 +44,8 @@ func Command() *cobra.Command {
 					defer grpcCancel()
 
 					vpolCompiler := vpolcompiler.NewCompiler()
-					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr, vpolCompiler, logger)
+					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr, vpolCompiler,
+						logger, controlPlaneReconnectWait, controlPlaneMaxDialInterval)
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
 					httpAuth := httpauth.NewServer(httpAuthAddress, provider)
@@ -68,6 +71,8 @@ func Command() *cobra.Command {
 			})
 		},
 	}
+	command.Flags().IntVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 10, "Duration in seconds to wait before retrying connecting to the control plane")
+	command.Flags().IntVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 30, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")

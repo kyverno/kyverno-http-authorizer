@@ -34,15 +34,21 @@ type PolicyListener struct {
 	logger                      *logrus.Logger
 }
 
-func NewPolicyListener(ctx context.Context, cancel context.CancelFunc, controlPlaneAddr string, compiler vpolcompiler.Compiler, logger *logrus.Logger) *PolicyListener {
+func NewPolicyListener(ctx context.Context,
+	cancel context.CancelFunc,
+	controlPlaneAddr string,
+	compiler vpolcompiler.Compiler,
+	logger *logrus.Logger,
+	controlPlaneReconnectWait int,
+	controlPlaneMaxDialInterval int) *PolicyListener {
 	return &PolicyListener{
 		ctx:                         ctx,
 		controlPlaneAddr:            controlPlaneAddr,
 		compiler:                    compiler,
 		logger:                      logger,
 		mu:                          &sync.Mutex{},
-		controlPlaneReconnectWait:   5,
-		controlPlaneMaxDialInterval: 10,
+		controlPlaneReconnectWait:   controlPlaneReconnectWait,
+		controlPlaneMaxDialInterval: controlPlaneMaxDialInterval,
 		policies:                    make(map[string]engine.CompiledPolicy),
 	}
 }

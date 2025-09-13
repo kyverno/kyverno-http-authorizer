@@ -30,7 +30,7 @@ type PolicySender struct {
 	sortPolicies          func() []*v1alpha1.ValidatingPolicy
 }
 
-func NewPolicySender(ctx context.Context, logger *logrus.Logger) *PolicySender {
+func NewPolicySender(ctx context.Context, logger *logrus.Logger, initialSendPolicyWait, maxSendPolicyInterval int) *PolicySender {
 	return &PolicySender{
 		polMu:                 &sync.Mutex{},
 		cxnMu:                 &sync.Mutex{},
@@ -38,8 +38,8 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger) *PolicySender {
 		ctx:                   ctx,
 		policies:              make(map[string]*v1alpha1.ValidatingPolicy),
 		cxnsMap:               make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
-		initialSendPolicyWait: 5,
-		maxSendPolicyInterval: 10,
+		initialSendPolicyWait: initialSendPolicyWait,
+		maxSendPolicyInterval: maxSendPolicyInterval,
 	}
 }
 
