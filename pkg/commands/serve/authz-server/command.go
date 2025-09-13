@@ -20,6 +20,7 @@ func Command() *cobra.Command {
 	var controlPlaneAddr string
 	var controlPlaneReconnectWait int
 	var controlPlaneMaxDialInterval int
+	var clientAddr string
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server",
@@ -43,9 +44,16 @@ func Command() *cobra.Command {
 					grpcCtx, grpcCancel := context.WithCancel(context.Background())
 					defer grpcCancel()
 
+					// clientAddr := os.Getenv("POD_IP")
+					// if clientAddr == "" {
+					// 	return fmt.Errorf("can't start auth server, no POD_IP has been passed")
+					// }
+
 					vpolCompiler := vpolcompiler.NewCompiler()
-					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr, vpolCompiler,
-						logger, controlPlaneReconnectWait, controlPlaneMaxDialInterval)
+					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr,
+						clientAddr, vpolCompiler,
+						logger, controlPlaneReconnectWait,
+						controlPlaneMaxDialInterval)
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
 					httpAuth := httpauth.NewServer(httpAuthAddress, provider)
@@ -76,6 +84,8 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
+	command.Flags().StringVar(&clientAddr, "client-address", "", "Client address")
+
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
 }

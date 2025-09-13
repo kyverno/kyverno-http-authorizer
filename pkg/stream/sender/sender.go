@@ -80,9 +80,9 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				s.logger.Infof("Receiver %s closed the stream", req.ClientAddress)
 				return nil
 			}
-			if err != nil { // ammar: theres a panic here. do something about it
-				s.logger.Infof("Error receiving response from %s: %v", req.ClientAddress, err)
-				return nil
+			if err != nil {
+				s.logger.Infof("Error receiving response: %v", err)
+				continue
 			}
 
 			s.logger.Infof("Received validating policy stream request from: %s", req.ClientAddress)

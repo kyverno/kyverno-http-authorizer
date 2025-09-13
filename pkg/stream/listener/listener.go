@@ -19,6 +19,7 @@ import (
 
 type PolicyListener struct {
 	controlPlaneAddr            string
+	clientAddr                  string
 	client                      protov1alpha1.ValidatingPolicyServiceClient
 	conn                        *grpc.ClientConn
 	stream                      grpc.BidiStreamingClient[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
@@ -37,6 +38,7 @@ type PolicyListener struct {
 func NewPolicyListener(ctx context.Context,
 	cancel context.CancelFunc,
 	controlPlaneAddr string,
+	clientAddr string,
 	compiler vpolcompiler.Compiler,
 	logger *logrus.Logger,
 	controlPlaneReconnectWait int,
@@ -46,6 +48,7 @@ func NewPolicyListener(ctx context.Context,
 		controlPlaneAddr:            controlPlaneAddr,
 		compiler:                    compiler,
 		logger:                      logger,
+		clientAddr:                  clientAddr,
 		mu:                          &sync.Mutex{},
 		controlPlaneReconnectWait:   controlPlaneReconnectWait,
 		controlPlaneMaxDialInterval: controlPlaneMaxDialInterval,
@@ -118,7 +121,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 				return
 			default:
 				if !l.connEstablished {
-					if err := stream.Send(&protov1alpha1.ValidatingPolicyStreamRequest{ClientAddress: "test:9092"}); err != nil { // ammar: get client address properly
+					if err := stream.Send(&protov1alpha1.ValidatingPolicyStreamRequest{ClientAddress: l.clientAddr}); err != nil {
 						l.logger.Error("Error sending to stream")
 						return
 					}

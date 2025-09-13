@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/server"
+	"github.com/sirupsen/logrus"
 )
 
 func NewServer(addr string, provider engine.Provider) server.ServerFunc {
@@ -13,8 +14,9 @@ func NewServer(addr string, provider engine.Provider) server.ServerFunc {
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
-		a := Authorizer{
+		a := &Authorizer{
 			provider: provider,
+			logger:   logrus.New(),
 		}
 
 		mux.Handle("POST /", http.HandlerFunc(a.NewHandler()))
