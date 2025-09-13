@@ -1,8 +1,10 @@
 package sender
 
 import (
+	"cmp"
 	"context"
 	"io"
+	"slices"
 	"sync"
 	"time"
 
@@ -11,6 +13,7 @@ import (
 	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
 )
 
@@ -26,6 +29,7 @@ type PolicySender struct {
 	logger                *logrus.Logger
 	initialSendPolicyWait int
 	maxSendPolicyInterval int
+	sortPolicies          func() []*v1alpha1.ValidatingPolicy
 }
 
 func NewPolicySender(ctx context.Context, logger *logrus.Logger) *PolicySender {
@@ -42,10 +46,6 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger) *PolicySender {
 }
 
 func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) error {
-	s.polMu.Lock()
-	s.policies[pol.Name] = pol
-	s.polMu.Unlock()
-
 	erroredClients := []error{}
 	for _, stream := range s.cxnsMap {
 		if err := s.sendWithBackoff(stream, pol); err != nil {
@@ -53,6 +53,22 @@ func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) error {
 		}
 	}
 	return multierr.Combine(erroredClients...)
+}
+
+func (s *PolicySender) StorePolicy(pol *v1alpha1.ValidatingPolicy) {
+	// this function just sets the struct field, it gets executed when the policies are being fetched
+	// so there is no double locking
+	resetSortPolicies := func() {
+		s.sortPolicies = sync.OnceValue(func() []*v1alpha1.ValidatingPolicy {
+			s.polMu.Lock()
+			defer s.polMu.Unlock()
+			return mapToSortedSlice(s.policies)
+		})
+	}
+	s.polMu.Lock()
+	s.policies[pol.Name] = pol
+	defer s.polMu.Unlock()
+	resetSortPolicies()
 }
 
 func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]) error {
@@ -76,7 +92,7 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				s.cxnMu.Lock()
 				s.cxnsMap[req.ClientAddress] = stream
 				s.cxnMu.Unlock()
-				for _, pol := range s.policies {
+				for _, pol := range s.sortPolicies() {
 					if err := s.sendWithBackoff(stream, pol); err != nil {
 						s.logger.Errorf("failed to send policy %s to client %s: %s", pol.Name, req.ClientAddress, err)
 					}
@@ -98,4 +114,17 @@ func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1al
 	b.InitialInterval = time.Duration(s.initialSendPolicyWait) * time.Second
 	b.MaxInterval = time.Duration(s.maxSendPolicyInterval) * time.Second
 	return backoff.Retry(operation, b)
+}
+
+func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
+	if in == nil {
+		return nil
+	}
+	out := make([]V, 0, len(in))
+	keys := maps.Keys(in)
+	slices.Sort(keys)
+	for _, key := range keys {
+		out = append(out, in[key])
+	}
+	return out
 }

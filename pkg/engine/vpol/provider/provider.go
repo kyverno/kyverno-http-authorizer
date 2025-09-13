@@ -77,6 +77,7 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if err != nil {
 		return ctrl.Result{}, err
 	}
+	r.polSender.StorePolicy(&policy)
 	go r.polSender.SendPolicy(&policy)
 	return ctrl.Result{}, nil
 }

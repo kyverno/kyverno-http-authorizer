@@ -122,11 +122,11 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 				}
 				req, err := l.stream.Recv()
 				if err == io.EOF {
-					l.logger.Info("Policy sender closed the stream")
+					l.logger.Errorf("Policy sender closed the stream")
 					return
 				}
 				if err != nil {
-					l.logger.Infof("Error receiving policy request: %v", err)
+					l.logger.Errorf("Error receiving policy request: %v", err)
 					return
 				}
 
@@ -142,6 +142,8 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 }
 
 func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
+	// this function just sets the struct field, it gets executed when the policies are being fetched
+	// so there is no double locking
 	resetSortPolicies := func() {
 		l.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {
 			l.mu.Lock()
