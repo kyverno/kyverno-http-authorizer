@@ -1,19 +1,17 @@
 package sender
 
 import (
-	"cmp"
 	"context"
 	"io"
-	"slices"
 	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/stream"
 	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
-	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
 )
 
@@ -62,7 +60,7 @@ func (s *PolicySender) StorePolicy(pol *v1alpha1.ValidatingPolicy) {
 		s.sortPolicies = sync.OnceValue(func() []*v1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
-			return mapToSortedSlice(s.policies)
+			return stream.MapToSortedSlice(s.policies)
 		})
 	}
 	s.polMu.Lock()
@@ -114,17 +112,4 @@ func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1al
 	b.InitialInterval = time.Duration(s.initialSendPolicyWait) * time.Second
 	b.MaxInterval = time.Duration(s.maxSendPolicyInterval) * time.Second
 	return backoff.Retry(operation, b)
-}
-
-func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
-	if in == nil {
-		return nil
-	}
-	out := make([]V, 0, len(in))
-	keys := maps.Keys(in)
-	slices.Sort(keys)
-	for _, key := range keys {
-		out = append(out, in[key])
-	}
-	return out
 }

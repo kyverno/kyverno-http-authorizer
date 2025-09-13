@@ -1,10 +1,8 @@
 package listener
 
 import (
-	"cmp"
 	"context"
 	"io"
-	"slices"
 	"sync"
 	"time"
 
@@ -12,9 +10,9 @@ import (
 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/stream"
 	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -148,7 +146,7 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 		l.sortPolicies = sync.OnceValue(func() []engine.CompiledPolicy {
 			l.mu.Lock()
 			defer l.mu.Unlock()
-			return mapToSortedSlice(l.policies)
+			return stream.MapToSortedSlice(l.policies)
 		})
 	}
 	vpol := v1alpha1.FromProto(req)
@@ -161,17 +159,4 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 	defer l.mu.Unlock()
 	l.policies[req.Name] = compiledPolicy
 	resetSortPolicies()
-}
-
-func mapToSortedSlice[K cmp.Ordered, V any](in map[K]V) []V {
-	if in == nil {
-		return nil
-	}
-	out := make([]V, 0, len(in))
-	keys := maps.Keys(in)
-	slices.Sort(keys)
-	for _, key := range keys {
-		out = append(out, in[key])
-	}
-	return out
 }
