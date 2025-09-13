@@ -281,13 +281,19 @@ func ToProto(pol *ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
 		})
 	}
 	var fp protov1alpha1.FailurePolicyType
-	switch string(*pol.Spec.FailurePolicy) {
-	case "Ignore":
+	if pol.Spec.FailurePolicy != nil {
+		switch *pol.Spec.FailurePolicy {
+		case admissionregistrationv1.Ignore:
+			fp = 1
+		case admissionregistrationv1.Fail:
+			fp = 2
+		}
+	} else {
 		fp = 1
-	case "Fail":
-		fp = 2
 	}
+
 	return &protov1alpha1.ValidatingPolicy{
+		Name: pol.Name,
 		Spec: &protov1alpha1.ValidatingPolicySpec{
 			Validations:     validations,
 			Variables:       variables,

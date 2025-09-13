@@ -6,7 +6,9 @@ import (
 	"io"
 	"slices"
 	"sync"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
@@ -18,28 +20,32 @@ import (
 )
 
 type PolicyListener struct {
-	controlPlaneAddr string
-	client           protov1alpha1.ValidatingPolicyServiceClient
-	conn             *grpc.ClientConn
-	stream           grpc.BidiStreamingClient[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
-	ctx              context.Context
-	cancel           context.CancelFunc
-	wg               sync.WaitGroup // ammar: check if you can remove this wait group
-	compiler         vpolcompiler.Compiler
-	mu               *sync.Mutex
-	policies         map[string]engine.CompiledPolicy
-	sortPolicies     func() []engine.CompiledPolicy
-	logger           *logrus.Logger
+	controlPlaneAddr            string
+	client                      protov1alpha1.ValidatingPolicyServiceClient
+	conn                        *grpc.ClientConn
+	stream                      grpc.BidiStreamingClient[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
+	ctx                         context.Context
+	wg                          sync.WaitGroup // ammar: check if you can remove this wait group
+	compiler                    vpolcompiler.Compiler
+	mu                          *sync.Mutex
+	policies                    map[string]engine.CompiledPolicy
+	sortPolicies                func() []engine.CompiledPolicy
+	connEstablished             bool
+	controlPlaneReconnectWait   int
+	controlPlaneMaxDialInterval int
+	logger                      *logrus.Logger
 }
 
 func NewPolicyListener(ctx context.Context, cancel context.CancelFunc, controlPlaneAddr string, compiler vpolcompiler.Compiler, logger *logrus.Logger) *PolicyListener {
 	return &PolicyListener{
-		ctx:              ctx,
-		cancel:           cancel,
-		controlPlaneAddr: controlPlaneAddr,
-		compiler:         compiler,
-		logger:           logger,
-		mu:               &sync.Mutex{},
+		ctx:                         ctx,
+		controlPlaneAddr:            controlPlaneAddr,
+		compiler:                    compiler,
+		logger:                      logger,
+		mu:                          &sync.Mutex{},
+		controlPlaneReconnectWait:   5,
+		controlPlaneMaxDialInterval: 10,
+		policies:                    make(map[string]engine.CompiledPolicy),
 	}
 }
 
@@ -49,8 +55,10 @@ func (l *PolicyListener) CompiledPolicies(ctx context.Context) ([]engine.Compile
 }
 
 func (l *PolicyListener) Start() error {
-	err := l.dial()
-	if err != nil {
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = time.Duration(l.controlPlaneReconnectWait) * time.Second
+	b.MaxInterval = time.Duration(l.controlPlaneReconnectWait) * time.Second
+	if err := backoff.Retry(l.dial, b); err != nil {
 		return err
 	}
 	if err := l.listen(context.Background()); err != nil {
@@ -61,10 +69,6 @@ func (l *PolicyListener) Start() error {
 
 func (l *PolicyListener) Stop() {
 	l.logger.Info("Stopping policy receiver...")
-	if l.cancel != nil {
-		l.cancel()
-	}
-
 	if l.stream != nil {
 		l.stream.CloseSend()
 	}
@@ -109,9 +113,12 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 				l.logger.Info("Stopping policy listener due to context cancellation")
 				return
 			default:
-				if err := stream.Send(&protov1alpha1.ValidatingPolicyStreamRequest{ClientAddress: "test:9092"}); err != nil { // ammar: get client address properly
-					l.logger.Error("Error sending to stream")
-					return
+				if !l.connEstablished {
+					if err := stream.Send(&protov1alpha1.ValidatingPolicyStreamRequest{ClientAddress: "test:9092"}); err != nil { // ammar: get client address properly
+						l.logger.Error("Error sending to stream")
+						return
+					}
+					l.connEstablished = true
 				}
 				req, err := l.stream.Recv()
 				if err == io.EOF {

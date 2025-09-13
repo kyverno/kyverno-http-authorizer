@@ -16,9 +16,12 @@ import (
 
 type PolicySender struct {
 	protov1alpha1.UnimplementedValidatingPolicyServiceServer
-	policies              map[string]*v1alpha1.ValidatingPolicy
-	mu                    *sync.Mutex
-	cxnsMap               map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
+	polMu    *sync.Mutex
+	policies map[string]*v1alpha1.ValidatingPolicy
+
+	cxnMu   *sync.Mutex
+	cxnsMap map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
+
 	ctx                   context.Context
 	logger                *logrus.Logger
 	initialSendPolicyWait int
@@ -27,18 +30,21 @@ type PolicySender struct {
 
 func NewPolicySender(ctx context.Context, logger *logrus.Logger) *PolicySender {
 	return &PolicySender{
-		mu:       &sync.Mutex{},
-		logger:   logger,
-		ctx:      ctx,
-		policies: make(map[string]*v1alpha1.ValidatingPolicy),
-		cxnsMap:  make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
+		polMu:                 &sync.Mutex{},
+		cxnMu:                 &sync.Mutex{},
+		logger:                logger,
+		ctx:                   ctx,
+		policies:              make(map[string]*v1alpha1.ValidatingPolicy),
+		cxnsMap:               make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
+		initialSendPolicyWait: 5,
+		maxSendPolicyInterval: 10,
 	}
 }
 
 func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) error {
-	s.mu.Lock()
+	s.polMu.Lock()
 	s.policies[pol.Name] = pol
-	s.mu.Unlock()
+	s.polMu.Unlock()
 
 	erroredClients := []error{}
 	for _, stream := range s.cxnsMap {
@@ -60,16 +66,16 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				s.logger.Infof("Receiver %s closed the stream", req.ClientAddress)
 				return nil
 			}
-			if err != nil {
+			if err != nil { // ammar: theres a panic here. do something about it
 				s.logger.Infof("Error receiving response from %s: %v", req.ClientAddress, err)
 				return nil
 			}
 
-			s.logger.Info("Received response from")
+			s.logger.Infof("Received validating policy stream request from: %s", req.ClientAddress)
 			if _, ok := s.cxnsMap[req.ClientAddress]; !ok {
-				s.mu.Lock()
-				defer s.mu.Unlock()
+				s.cxnMu.Lock()
 				s.cxnsMap[req.ClientAddress] = stream
+				s.cxnMu.Unlock()
 				for _, pol := range s.policies {
 					if err := s.sendWithBackoff(stream, pol); err != nil {
 						s.logger.Errorf("failed to send policy %s to client %s: %s", pol.Name, req.ClientAddress, err)
