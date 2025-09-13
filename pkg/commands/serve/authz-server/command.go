@@ -37,8 +37,11 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
-					vpolCompiler := vpolcompiler.NewCompiler()
+					// create another context for the control plane connection to avoid closing the auth server if the control plane exits
+					grpcCtx, grpcCancel := context.WithCancel(context.Background())
+					defer grpcCancel()
 
+					vpolCompiler := vpolcompiler.NewCompiler()
 					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr, vpolCompiler, logger)
 					// create http and grpc servers
 					http := probes.NewServer(probesAddress)
@@ -54,9 +57,9 @@ func Command() *cobra.Command {
 						defer cancel()
 						httpAuthErr = httpAuth.Run(ctx)
 					})
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
-						defer cancel()
+					group.StartWithContext(grpcCtx, func(ctx context.Context) {
+						// cancel control plane grpc context at the end
+						defer grpcCancel()
 						grpcErr = provider.Start()
 					})
 					return nil
