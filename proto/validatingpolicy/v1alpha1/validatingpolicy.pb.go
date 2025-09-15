@@ -444,7 +444,8 @@ func (x *Variable) GetExpression() string {
 type ValidatingPolicy struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Spec          *ValidatingPolicySpec  `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
+	Delete        bool                   `protobuf:"varint,2,opt,name=delete,proto3" json:"delete,omitempty"`
+	Spec          *ValidatingPolicySpec  `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -484,6 +485,13 @@ func (x *ValidatingPolicy) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *ValidatingPolicy) GetDelete() bool {
+	if x != nil {
+		return x.Delete
+	}
+	return false
 }
 
 func (x *ValidatingPolicy) GetSpec() *ValidatingPolicySpec {
@@ -570,10 +578,11 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"expression\x18\x02 \x01(\tR\n" +
-	"expression\"g\n" +
+	"expression\"\x7f\n" +
 	"\x10ValidatingPolicy\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
-	"\x04spec\x18\x02 \x01(\v2+.kyverno.http.v1alpha1.ValidatingPolicySpecR\x04spec\"F\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
+	"\x06delete\x18\x02 \x01(\bR\x06delete\x12?\n" +
+	"\x04spec\x18\x03 \x01(\v2+.kyverno.http.v1alpha1.ValidatingPolicySpecR\x04spec\"F\n" +
 	"\x1dValidatingPolicyStreamRequest\x12%\n" +
 	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress*v\n" +
 	"\x11FailurePolicyType\x12#\n" +
