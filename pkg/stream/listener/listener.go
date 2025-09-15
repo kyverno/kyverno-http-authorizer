@@ -89,7 +89,7 @@ func (l *PolicyListener) Stop() {
 
 func (l *PolicyListener) dial() error {
 	l.logger.Infof("Connecting to control plane at %s", l.controlPlaneAddr)
-	// Create connection to the control plane
+	l.connEstablished = false // set connection to false to mark a new connection
 	conn, err := grpc.NewClient(l.controlPlaneAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err

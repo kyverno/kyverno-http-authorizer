@@ -119,13 +119,11 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				s.cxnMu.Unlock()
 				if len(s.policies) > 0 {
 					for _, pol := range s.sortPolicies() {
-						if err := s.sendWithBackoff(stream, pol); err != nil {
-							s.logger.Errorf("failed to send policy %s to client %s: %s", pol.Name, req.ClientAddress, err)
-						}
+						// send each policy in a goroutine to avoid blocking the receive loop
+						go s.sendWithBackoff(stream, pol)
 					}
 				}
 			}
-			// ammar: what to do in case this sender exists?
 		}
 	}
 }

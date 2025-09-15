@@ -2,6 +2,7 @@ package authzserver
 
 import (
 	"context"
+	"time"
 
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/httpauth"
@@ -71,7 +72,10 @@ func Command() *cobra.Command {
 					group.StartWithContext(grpcCtx, func(ctx context.Context) {
 						// cancel control plane grpc context at the end
 						defer grpcCancel()
-						grpcErr = provider.Start()
+						if grpcErr = provider.Start(); grpcErr != nil {
+							logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
+							time.Sleep(time.Second * 10)
+						}
 					})
 					return nil
 				}(ctx)
@@ -79,8 +83,8 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().IntVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 10, "Duration in seconds to wait before retrying connecting to the control plane")
-	command.Flags().IntVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 30, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
+	command.Flags().IntVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3, "Duration in seconds to wait before retrying connecting to the control plane")
+	command.Flags().IntVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
