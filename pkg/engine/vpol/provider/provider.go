@@ -12,6 +12,7 @@ import (
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream/sender"
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -72,6 +73,10 @@ func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		defer r.lock.Unlock()
 		defer resetSortPolicies()
 		delete(r.policies, req.String())
+		// deletion is marked by sending a policy with no spec
+		go r.polSender.SendPolicy(&v1alpha1.ValidatingPolicy{ObjectMeta: metav1.ObjectMeta{
+			Name: req.Name,
+		}})
 		return ctrl.Result{}, nil
 	}
 	if err != nil {

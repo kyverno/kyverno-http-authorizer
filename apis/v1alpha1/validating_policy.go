@@ -256,6 +256,7 @@ type WebhookConfiguration struct {
 }
 
 func ToProto(pol *ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
+	// ammar: return a policy with nil spec to denote deletion
 	validations := []*protov1alpha1.Validation{}
 	for _, v := range pol.Spec.Validations {
 		validations = append(validations, &protov1alpha1.Validation{

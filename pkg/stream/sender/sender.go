@@ -43,14 +43,25 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger, initialSendPoli
 	}
 }
 
-func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) error {
-	erroredClients := []error{}
+// ammar: turn this to a channel of policy
+func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) {
+	errCh := make(chan error)
+	var wg sync.WaitGroup
+	wg.Add(len(s.cxnsMap))
+	// send to clients, but don't wait on any of them
 	for _, stream := range s.cxnsMap {
-		if err := s.sendWithBackoff(stream, pol); err != nil {
-			erroredClients = append(erroredClients, err)
-		}
+		go func() {
+			errCh <- s.sendWithBackoff(stream, pol)
+		}()
 	}
-	return multierr.Combine(erroredClients...)
+	wg.Wait()
+	errs := make([]error, len(errCh))
+	for e := range errCh {
+		errs = append(errs, e)
+	}
+	if len(errs) > 0 {
+		logrus.Error(multierr.Combine(errs...))
+	}
 }
 
 func (s *PolicySender) StorePolicy(pol *v1alpha1.ValidatingPolicy) {
@@ -69,6 +80,20 @@ func (s *PolicySender) StorePolicy(pol *v1alpha1.ValidatingPolicy) {
 	resetSortPolicies()
 }
 
+func (s *PolicySender) DeletePolicy(polName string) {
+	resetSortPolicies := func() {
+		s.sortPolicies = sync.OnceValue(func() []*v1alpha1.ValidatingPolicy {
+			s.polMu.Lock()
+			defer s.polMu.Unlock()
+			return stream.MapToSortedSlice(s.policies)
+		})
+	}
+	s.polMu.Lock()
+	delete(s.policies, polName)
+	defer s.polMu.Unlock()
+	resetSortPolicies()
+}
+
 func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]) error {
 	for {
 		select {
@@ -82,7 +107,7 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 			}
 			if err != nil {
 				s.logger.Infof("Error receiving response: %v", err)
-				continue
+				return err
 			}
 
 			s.logger.Infof("Received validating policy stream request from: %s", req.ClientAddress)

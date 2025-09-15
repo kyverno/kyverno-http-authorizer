@@ -158,6 +158,15 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 			return stream.MapToSortedSlice(l.policies)
 		})
 	}
+	// receiving a policy with nil spec means a deletion
+	if req.Spec == nil {
+		l.logger.Info("deleting policy", req.Name)
+		l.mu.Lock()
+		delete(l.policies, req.Name)
+		l.mu.Unlock()
+		resetSortPolicies()
+		return
+	}
 	vpol := v1alpha1.FromProto(req)
 	compiledPolicy, err := l.compiler.Compile(vpol)
 	if err != nil {

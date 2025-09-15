@@ -83,7 +83,8 @@ message Variable {
 // Request message for validating policy operations
 message ValidatingPolicy {
   string name = 1;
-  ValidatingPolicySpec spec = 2;
+  bool delete = 2;
+  ValidatingPolicySpec spec = 3;
 }
 
 message ValidatingPolicyStreamRequest {
