@@ -137,7 +137,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 					return
 				}
 
-				l.logger.Infof("Received validating policy request: %s", req.Name)
+				l.logger.Infof("Received validating policy request: %s, Delete: %t", req.Name, req.Delete)
 				go l.processPolicy(req)
 			}
 		}
@@ -160,7 +160,7 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 	}
 	// receiving a policy with nil spec means a deletion
 	if req.Spec == nil {
-		l.logger.Info("deleting policy", req.Name)
+		l.logger.Info("deleting policy: ", req.Name)
 		l.mu.Lock()
 		delete(l.policies, req.Name)
 		l.mu.Unlock()

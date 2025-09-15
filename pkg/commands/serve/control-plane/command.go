@@ -13,6 +13,7 @@ import (
 	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
+
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream/sender"
@@ -81,10 +82,10 @@ func Command() *cobra.Command {
 						if err != nil {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
-						// create kube providers
-						_, err = vpolprovider.NewKubeProvider(mgr, s)
-						if err != nil {
-							return err
+						// create policy reconciler
+						r := vpolprovider.NewPolicyReconciler(mgr.GetClient(), s)
+						if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
+							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
 						// start manager
 						group.StartWithContext(ctx, func(ctx context.Context) {

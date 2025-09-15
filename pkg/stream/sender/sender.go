@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream"
 	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -18,7 +17,7 @@ import (
 type PolicySender struct {
 	protov1alpha1.UnimplementedValidatingPolicyServiceServer
 	polMu    *sync.Mutex
-	policies map[string]*v1alpha1.ValidatingPolicy
+	policies map[string]*protov1alpha1.ValidatingPolicy
 
 	cxnMu   *sync.Mutex
 	cxnsMap map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
@@ -27,7 +26,7 @@ type PolicySender struct {
 	logger                *logrus.Logger
 	initialSendPolicyWait int
 	maxSendPolicyInterval int
-	sortPolicies          func() []*v1alpha1.ValidatingPolicy
+	sortPolicies          func() []*protov1alpha1.ValidatingPolicy
 }
 
 func NewPolicySender(ctx context.Context, logger *logrus.Logger, initialSendPolicyWait, maxSendPolicyInterval int) *PolicySender {
@@ -36,25 +35,28 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger, initialSendPoli
 		cxnMu:                 &sync.Mutex{},
 		logger:                logger,
 		ctx:                   ctx,
-		policies:              make(map[string]*v1alpha1.ValidatingPolicy),
+		policies:              make(map[string]*protov1alpha1.ValidatingPolicy),
 		cxnsMap:               make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
 		initialSendPolicyWait: initialSendPolicyWait,
 		maxSendPolicyInterval: maxSendPolicyInterval,
 	}
 }
 
-// ammar: turn this to a channel of policy
-func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) {
+func (s *PolicySender) SendPolicy(pol *protov1alpha1.ValidatingPolicy) {
 	errCh := make(chan error)
 	var wg sync.WaitGroup
 	wg.Add(len(s.cxnsMap))
 	// send to clients, but don't wait on any of them
 	for _, stream := range s.cxnsMap {
 		go func() {
+			defer wg.Done()
 			errCh <- s.sendWithBackoff(stream, pol)
 		}()
 	}
+
 	wg.Wait()
+	close(errCh)
+
 	errs := make([]error, len(errCh))
 	for e := range errCh {
 		errs = append(errs, e)
@@ -64,11 +66,11 @@ func (s *PolicySender) SendPolicy(pol *v1alpha1.ValidatingPolicy) {
 	}
 }
 
-func (s *PolicySender) StorePolicy(pol *v1alpha1.ValidatingPolicy) {
+func (s *PolicySender) StorePolicy(pol *protov1alpha1.ValidatingPolicy) {
 	// this function just sets the struct field, it gets executed when the policies are being fetched
 	// so there is no double locking
 	resetSortPolicies := func() {
-		s.sortPolicies = sync.OnceValue(func() []*v1alpha1.ValidatingPolicy {
+		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
 			return stream.MapToSortedSlice(s.policies)
@@ -82,7 +84,7 @@ func (s *PolicySender) StorePolicy(pol *v1alpha1.ValidatingPolicy) {
 
 func (s *PolicySender) DeletePolicy(polName string) {
 	resetSortPolicies := func() {
-		s.sortPolicies = sync.OnceValue(func() []*v1alpha1.ValidatingPolicy {
+		s.sortPolicies = sync.OnceValue(func() []*protov1alpha1.ValidatingPolicy {
 			s.polMu.Lock()
 			defer s.polMu.Unlock()
 			return stream.MapToSortedSlice(s.policies)
@@ -115,9 +117,11 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 				s.cxnMu.Lock()
 				s.cxnsMap[req.ClientAddress] = stream
 				s.cxnMu.Unlock()
-				for _, pol := range s.sortPolicies() {
-					if err := s.sendWithBackoff(stream, pol); err != nil {
-						s.logger.Errorf("failed to send policy %s to client %s: %s", pol.Name, req.ClientAddress, err)
+				if len(s.policies) > 0 {
+					for _, pol := range s.sortPolicies() {
+						if err := s.sendWithBackoff(stream, pol); err != nil {
+							s.logger.Errorf("failed to send policy %s to client %s: %s", pol.Name, req.ClientAddress, err)
+						}
 					}
 				}
 			}
@@ -126,9 +130,9 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 	}
 }
 
-func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy], pol *v1alpha1.ValidatingPolicy) error {
+func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy], pol *protov1alpha1.ValidatingPolicy) error {
 	operation := func() error {
-		if err := stream.Send(v1alpha1.ToProto(pol)); err != nil {
+		if err := stream.Send(pol); err != nil {
 			return err
 		}
 		return nil
