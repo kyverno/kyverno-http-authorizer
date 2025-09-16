@@ -53,6 +53,9 @@ func NewPolicyListener(ctx context.Context,
 		controlPlaneReconnectWait:   controlPlaneReconnectWait,
 		controlPlaneMaxDialInterval: controlPlaneMaxDialInterval,
 		policies:                    make(map[string]engine.CompiledPolicy),
+		sortPolicies: func() []engine.CompiledPolicy {
+			return nil
+		},
 	}
 }
 
