@@ -7,10 +7,7 @@ import (
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/jwt"
 
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno/pkg/cel/libs/image"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
-
-	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 
 	"k8s.io/apiserver/pkg/cel/library"
 )
@@ -42,8 +39,6 @@ func NewEnv() (*cel.Env, error) {
 		// register our libs
 		jwt.Lib(),
 		// register kyverno libs
-		image.Lib(),
-		imagedata.Lib(),
 		http.Lib(),
 		httpauth.Lib(),
 		resource.Lib(),
