@@ -4,7 +4,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Sidecar(image string, externalPolicySources ...string) corev1.Container {
+func Sidecar(image string, controlPlaneAddr string, externalPolicySources ...string) corev1.Container {
 	container := corev1.Container{
 		Name:            "kyverno-authz-server",
 		ImagePullPolicy: corev1.PullIfNotPresent,
@@ -25,6 +25,7 @@ func Sidecar(image string, externalPolicySources ...string) corev1.Container {
 			"--grpc-address=:9081",
 			"--metrics-address=:9082",
 			"--kube-policy-source=false",
+			"--control-plane-address=" + controlPlaneAddr,
 		},
 		Env: []corev1.EnvVar{
 			{
