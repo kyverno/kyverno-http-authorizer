@@ -22,7 +22,6 @@ func Sidecar(image string, controlPlaneAddr string, externalPolicySources ...str
 			"serve",
 			"authz-server",
 			"--probes-address=:9080",
-			"--kube-policy-source=false",
 			"--control-plane-address=" + controlPlaneAddr,
 		},
 		Env: []corev1.EnvVar{
