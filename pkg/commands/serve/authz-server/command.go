@@ -72,9 +72,12 @@ func Command() *cobra.Command {
 					group.StartWithContext(grpcCtx, func(ctx context.Context) {
 						// cancel control plane grpc context at the end
 						defer grpcCancel()
-						if grpcErr = provider.Start(); grpcErr != nil {
-							logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
-							time.Sleep(time.Second * 10)
+						for {
+							if grpcErr = provider.Start(); grpcErr != nil {
+								logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
+								time.Sleep(time.Second * 10)
+							}
+							continue
 						}
 					})
 					return nil

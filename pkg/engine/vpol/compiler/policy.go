@@ -32,8 +32,12 @@ type compiledPolicy struct {
 
 func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 	match := sync.OnceValues(func() (bool, error) {
+		req, err := httpauth.NewRequest(r)
+		if err != nil {
+			return false, err
+		}
 		data := map[string]any{
-			ObjectKey: r,
+			ObjectKey: req,
 		}
 		var errs []error
 		for _, matchCondition := range p.matchConditions {

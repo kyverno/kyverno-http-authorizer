@@ -113,12 +113,10 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 			}
 
 			s.logger.Infof("Received validating policy stream request from: %s", req.ClientAddress)
-			if _, ok := s.cxnsMap[req.ClientAddress]; !ok {
-				if len(s.policies) > 0 {
-					for _, pol := range s.sortPolicies() {
-						// send each policy in a goroutine to avoid blocking the receive loop
-						go s.sendWithBackoff(stream, pol)
-					}
+			if len(s.policies) > 0 {
+				for _, pol := range s.sortPolicies() {
+					// send each policy in a goroutine to avoid blocking the receive loop
+					go s.sendWithBackoff(stream, pol)
 				}
 			}
 			s.cxnMu.Lock()
