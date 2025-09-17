@@ -26,6 +26,16 @@ func Sidecar(image string, externalPolicySources ...string) corev1.Container {
 			"--metrics-address=:9082",
 			"--kube-policy-source=false",
 		},
+		Env: []corev1.EnvVar{
+			{
+				Name: "POD_IP",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						FieldPath: "status.podIP",
+					},
+				},
+			},
+		},
 	}
 	for _, source := range externalPolicySources {
 		container.Args = append(container.Args, "--external-policy-source="+source)
