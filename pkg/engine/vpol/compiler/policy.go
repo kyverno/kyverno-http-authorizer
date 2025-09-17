@@ -17,6 +17,7 @@ import (
 
 	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 
 	"go.uber.org/multierr"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -75,6 +76,7 @@ func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 		data := map[string]any{
 			HttpKey:      httpreq.Context{ContextInterface: httpreq.NewHTTP(nil)},
 			ImageDataKey: imagedata.Context{ContextInterface: loader},
+			ResourceKey:  resource.Context{ContextInterface: resource.Context{}},
 			ObjectKey:    req,
 			VariablesKey: vars,
 		}

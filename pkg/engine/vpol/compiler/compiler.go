@@ -11,6 +11,7 @@ import (
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -20,6 +21,7 @@ const (
 	ImageDataKey = "image"
 	ObjectKey    = "object"
 	VariablesKey = "variables"
+	ResourceKey  = "resource"
 )
 
 type Compiler = engine.Compiler[*v1alpha1.ValidatingPolicy]
@@ -49,6 +51,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 		cel.Variable(HttpKey, httpreq.ContextType),
 		cel.Variable(ImageDataKey, imagedata.ContextType),
 		cel.Variable(VariablesKey, authzcel.VariablesType),
+		cel.Variable(ResourceKey, resource.ContextType),
 		cel.CustomTypeProvider(varsProvider),
 	)
 	if err != nil {
