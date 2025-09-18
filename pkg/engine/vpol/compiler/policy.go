@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"errors"
-	"net/http"
 	"sync"
 
 	"github.com/google/cel-go/cel"
@@ -29,12 +28,8 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) ForHTTP(ctx resource.ContextInterface, r *http.Request) engine.RequestFunc {
+func (p compiledPolicy) ForHTTP(ctx resource.ContextInterface, req *httpauth.Request) engine.RequestFunc {
 	match := sync.OnceValues(func() (bool, error) {
-		req, err := httpauth.NewRequest(r)
-		if err != nil {
-			return false, err
-		}
 		data := map[string]any{
 			ObjectKey: req,
 		}
@@ -63,10 +58,6 @@ func (p compiledPolicy) ForHTTP(ctx resource.ContextInterface, r *http.Request) 
 	})
 	variables := sync.OnceValues(func() (map[string]any, error) {
 		vars := lazy.NewMapValue(authzcel.VariablesType)
-		req, err := httpauth.NewRequest(r)
-		if err != nil {
-			return nil, err
-		}
 		data := map[string]any{
 			HttpKey:      httpreq.Context{ContextInterface: httpreq.NewHTTP(nil)},
 			ResourceKey:  resource.Context{ContextInterface: ctx},

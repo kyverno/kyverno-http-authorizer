@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	httpauth "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
 	httpcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
+
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"github.com/sirupsen/logrus"
@@ -27,14 +29,20 @@ func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 			writeErrResp(w, err)
 			return
 		}
+
 		pols, err := a.provider.CompiledPolicies(context.Background())
 		if err != nil {
 			writeErrResp(w, err)
 			return
 		}
 		ruleFuncs := []engine.RequestFunc{}
+		httpReq, err := httpauth.NewRequest(req)
+		if err != nil {
+			writeErrResp(w, err)
+			return
+		}
 		for _, pol := range pols {
-			ruleFuncs = append(ruleFuncs, pol.ForHTTP(a.resourceCtx, req))
+			ruleFuncs = append(ruleFuncs, pol.ForHTTP(a.resourceCtx, &httpReq))
 		}
 		for _, r := range ruleFuncs {
 			resp, err := r()
@@ -45,9 +53,10 @@ func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 			// write the first valid policy response and exit
 			if resp != nil {
 				writeResponse(w, resp)
-				break
+				return
 			}
 		}
+		// ammar: whats the return value in case the request didn't match ?
 	}
 }
 

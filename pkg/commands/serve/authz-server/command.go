@@ -76,7 +76,6 @@ func Command() *cobra.Command {
 					if err != nil {
 						return err
 					}
-
 					dclient, err := dclient.NewClient(ctx, dynamicClient, kube, 15*time.Minute, false, metaClient)
 					if err != nil {
 						return err
