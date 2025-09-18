@@ -29,7 +29,7 @@ type compiledPolicy struct {
 	rules           []cel.Program
 }
 
-func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
+func (p compiledPolicy) ForHTTP(ctx resource.ContextInterface, r *http.Request) engine.RequestFunc {
 	match := sync.OnceValues(func() (bool, error) {
 		req, err := httpauth.NewRequest(r)
 		if err != nil {
@@ -69,7 +69,7 @@ func (p compiledPolicy) ForHTTP(r *http.Request) engine.RequestFunc {
 		}
 		data := map[string]any{
 			HttpKey:      httpreq.Context{ContextInterface: httpreq.NewHTTP(nil)},
-			ResourceKey:  resource.Context{ContextInterface: resource.Context{}},
+			ResourceKey:  resource.Context{ContextInterface: ctx},
 			ObjectKey:    req,
 			VariablesKey: vars,
 		}

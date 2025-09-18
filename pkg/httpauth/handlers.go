@@ -8,12 +8,14 @@ import (
 
 	httpcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"github.com/sirupsen/logrus"
 )
 
 type Authorizer struct {
-	provider engine.Provider
-	logger   *logrus.Logger
+	provider    engine.Provider
+	logger      *logrus.Logger
+	resourceCtx resource.ContextInterface
 }
 
 func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +34,7 @@ func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 		}
 		ruleFuncs := []engine.RequestFunc{}
 		for _, pol := range pols {
-			ruleFuncs = append(ruleFuncs, pol.ForHTTP(req))
+			ruleFuncs = append(ruleFuncs, pol.ForHTTP(a.resourceCtx, req))
 		}
 		for _, r := range ruleFuncs {
 			resp, err := r()
