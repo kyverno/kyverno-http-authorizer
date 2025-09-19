@@ -65,6 +65,9 @@ func Command() *cobra.Command {
 
 					// initialize kubernetes clients
 					dclient, err := initK8sClients(ctx, cfg)
+					if err != nil {
+						return err
+					}
 
 					vpolCompiler := vpolcompiler.NewCompiler()
 					provider := listener.NewPolicyListener(controlPlaneAddr,
