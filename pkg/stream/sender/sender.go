@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 )
 
 type PolicySender struct {
@@ -96,6 +97,8 @@ func (s *PolicySender) DeletePolicy(polName string) {
 	resetSortPolicies()
 }
 
+// ammar: add health check rpc
+
 func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]) error {
 	for {
 		select {
@@ -104,11 +107,19 @@ func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[
 		default:
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Infof("Receiver %s closed the stream", req.ClientAddress)
+				if p, ok := peer.FromContext(stream.Context()); ok {
+					s.logger.Infof("Receiver at %s closed the stream", p.Addr)
+				} else {
+					s.logger.Infof("Receiver closed the stream")
+				}
 				return nil
 			}
 			if err != nil {
-				s.logger.Infof("Error receiving response: %v", err)
+				if p, ok := peer.FromContext(stream.Context()); ok {
+					s.logger.Infof("Receiver at %s errored", p.Addr)
+				} else {
+					s.logger.Infof("Receiver errored")
+				}
 				return err
 			}
 
