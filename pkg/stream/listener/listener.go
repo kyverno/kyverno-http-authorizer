@@ -22,9 +22,7 @@ type PolicyListener struct {
 	clientAddr                  string
 	client                      protov1alpha1.ValidatingPolicyServiceClient
 	conn                        *grpc.ClientConn
-	stream                      grpc.BidiStreamingClient[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
 	ctx                         context.Context
-	wg                          sync.WaitGroup
 	compiler                    vpolcompiler.Compiler
 	mu                          *sync.Mutex
 	policies                    map[string]engine.CompiledPolicy
@@ -77,19 +75,6 @@ func (l *PolicyListener) Start() error {
 	return nil
 }
 
-func (l *PolicyListener) Stop() {
-	l.logger.Info("Stopping policy receiver...")
-	if l.stream != nil {
-		l.stream.CloseSend()
-	}
-	l.wg.Wait()
-
-	if l.conn != nil {
-		l.conn.Close()
-	}
-	l.logger.Info("Policy receiver stopped")
-}
-
 func (l *PolicyListener) dial() error {
 	l.logger.Infof("Connecting to control plane at %s", l.controlPlaneAddr)
 	l.connEstablished = false // set connection to false to mark a new connection
@@ -100,7 +85,6 @@ func (l *PolicyListener) dial() error {
 
 	l.conn = conn
 	l.client = protov1alpha1.NewValidatingPolicyServiceClient(conn)
-
 	return nil
 }
 
@@ -113,14 +97,19 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 		return err
 	}
 
-	l.stream = stream
-	l.wg.Add(1)
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
-		defer l.wg.Done()
+		defer wg.Done()
 		for {
 			select {
 			case <-l.ctx.Done():
 				l.logger.Info("Stopping policy listener due to context cancellation")
+				stream.CloseSend()
+
+				if l.conn != nil {
+					l.conn.Close()
+				}
 				return
 			default:
 				if !l.connEstablished {
@@ -130,7 +119,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 					}
 					l.connEstablished = true
 				}
-				req, err := l.stream.Recv()
+				req, err := stream.Recv()
 				if err == io.EOF {
 					l.logger.Errorf("Policy sender closed the stream")
 					return
@@ -147,7 +136,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 	}()
 
 	l.logger.Info("Policy listener running...")
-	l.wg.Wait()
+	wg.Wait()
 	return nil
 }
 

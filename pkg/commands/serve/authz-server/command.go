@@ -2,6 +2,7 @@ package authzserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -15,6 +16,8 @@ import (
 	"github.com/kyverno/kyverno/pkg/clients/dclient"
 	dyn "github.com/kyverno/kyverno/pkg/clients/dynamic"
 	meta "github.com/kyverno/kyverno/pkg/clients/metadata"
+
+	nethttp "net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -50,10 +53,6 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
-					// create another context for the control plane connection to avoid closing the auth server if the control plane exits
-					grpcCtx, grpcCancel := context.WithCancel(context.Background())
-					defer grpcCancel()
-
 					clientAddr := os.Getenv("POD_IP")
 					if clientAddr == "" {
 						return fmt.Errorf("can't start auth server, no POD_IP has been passed")
@@ -65,23 +64,7 @@ func Command() *cobra.Command {
 					}
 
 					// initialize kubernetes clients
-					// ammar: wrap this somehow
-					dynamicClient, err := dyn.NewForConfig(cfg)
-					if err != nil {
-						return err
-					}
-					metaClient, err := meta.NewForConfig(cfg)
-					if err != nil {
-						return err
-					}
-					kube, err := kubernetes.NewForConfig(cfg)
-					if err != nil {
-						return err
-					}
-					dclient, err := dclient.NewClient(ctx, dynamicClient, kube, 15*time.Minute, false, metaClient)
-					if err != nil {
-						return err
-					}
+					dclient, err := initK8sClients(ctx, cfg)
 
 					vpolCompiler := vpolcompiler.NewCompiler()
 					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr,
@@ -95,21 +78,50 @@ func Command() *cobra.Command {
 					httpAuth := httpauth.NewServer(httpAuthAddress, provider, ctxprovider.NewContextProvider(dclient))
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
+						// probes
 						defer cancel()
-						httpErr = http.Run(ctx)
-					})
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						// cancel context at the end
-						defer cancel()
-						httpAuthErr = httpAuth.Run(ctx)
-					})
-					group.StartWithContext(grpcCtx, func(ctx context.Context) {
-						// cancel control plane grpc context at the end
-						defer grpcCancel()
 						for {
 							select {
-							case <-grpcCtx.Done():
+							case <-ctx.Done():
+								return
+							default:
+								if httpErr = http.Run(ctx); httpErr != nil {
+									if errors.Is(httpAuthErr, nethttp.ErrServerClosed) {
+										logger.Error("error running the probes, sleeping 10 seconds then retrying")
+										time.Sleep(time.Second * 10)
+										continue
+									}
+									logger.WithError(err).Error("fatal error running probes server, not retrying")
+									return
+								}
+							}
+						}
+					})
+					group.StartWithContext(ctx, func(ctx context.Context) {
+						// auth server
+						defer cancel()
+						for {
+							select {
+							case <-ctx.Done():
+								return
+							default:
+								if httpAuthErr = httpAuth.Run(ctx); httpAuthErr != nil {
+									if errors.Is(httpAuthErr, nethttp.ErrServerClosed) {
+										logger.Error("error running the auth server, sleeping 10 seconds then retrying")
+										time.Sleep(time.Second * 10)
+										continue
+									}
+									logger.WithError(err).Error("fatal error running probes server, not retrying")
+									return
+								}
+							}
+						}
+					})
+					group.StartWithContext(ctx, func(ctx context.Context) {
+						// control plane connection
+						for {
+							select {
+							case <-ctx.Done():
 								return
 							default:
 								if grpcErr = provider.Start(); grpcErr != nil {
@@ -135,4 +147,24 @@ func Command() *cobra.Command {
 
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
+}
+
+func initK8sClients(ctx context.Context, cfg *rest.Config) (dclient.Interface, error) {
+	dynamicClient, err := dyn.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	metaClient, err := meta.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	kube, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	dclient, err := dclient.NewClient(ctx, dynamicClient, kube, 15*time.Minute, false, metaClient)
+	if err != nil {
+		return nil, err
+	}
+	return dclient, nil
 }
