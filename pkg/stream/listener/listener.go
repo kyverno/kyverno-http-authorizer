@@ -24,7 +24,7 @@ type PolicyListener struct {
 	conn                        *grpc.ClientConn
 	stream                      grpc.BidiStreamingClient[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
 	ctx                         context.Context
-	wg                          sync.WaitGroup // ammar: check if you can remove this wait group
+	wg                          sync.WaitGroup
 	compiler                    vpolcompiler.Compiler
 	mu                          *sync.Mutex
 	policies                    map[string]engine.CompiledPolicy

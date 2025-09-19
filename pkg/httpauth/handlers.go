@@ -56,7 +56,6 @@ func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		// ammar: whats the return value in case the request didn't match ?
 	}
 }
 
