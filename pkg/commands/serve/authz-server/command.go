@@ -13,9 +13,7 @@ import (
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream/listener"
-	"github.com/kyverno/kyverno/pkg/clients/dclient"
-	dyn "github.com/kyverno/kyverno/pkg/clients/dynamic"
-	meta "github.com/kyverno/kyverno/pkg/clients/metadata"
+	"k8s.io/client-go/dynamic"
 
 	nethttp "net/http"
 
@@ -23,7 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
@@ -63,8 +60,8 @@ func Command() *cobra.Command {
 						return err
 					}
 
-					// initialize kubernetes clients
-					dclient, err := initK8sClients(ctx, cfg)
+					// initialize kubernetes client
+					dyn, err := dynamic.NewForConfig(cfg)
 					if err != nil {
 						return err
 					}
@@ -78,7 +75,7 @@ func Command() *cobra.Command {
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
 					// ammar: split the authorizer and pass it as a dependency to this function
-					httpAuth := httpauth.NewServer(httpAuthAddress, provider, ctxprovider.NewContextProvider(dclient))
+					httpAuth := httpauth.NewServer(httpAuthAddress, provider, ctxprovider.NewContextProvider(dyn))
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
@@ -150,24 +147,4 @@ func Command() *cobra.Command {
 
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
-}
-
-func initK8sClients(ctx context.Context, cfg *rest.Config) (dclient.Interface, error) {
-	dynamicClient, err := dyn.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	metaClient, err := meta.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	kube, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-	dclient, err := dclient.NewClient(ctx, dynamicClient, kube, 15*time.Minute, false, metaClient)
-	if err != nil {
-		return nil, err
-	}
-	return dclient, nil
 }

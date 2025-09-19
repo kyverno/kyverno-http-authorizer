@@ -3,7 +3,6 @@ package ctxprovider
 import (
 	"context"
 
-	"github.com/kyverno/kyverno/pkg/clients/dclient"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,10 +10,10 @@ import (
 )
 
 type ContextProvider struct {
-	client dclient.Interface
+	client dynamic.Interface
 }
 
-func NewContextProvider(c dclient.Interface) *ContextProvider {
+func NewContextProvider(c dynamic.Interface) *ContextProvider {
 	return &ContextProvider{
 		client: c,
 	}
@@ -48,7 +47,7 @@ func (cp *ContextProvider) PostResource(apiVersion, resource, namespace string, 
 }
 
 func (cp *ContextProvider) getResourceClient(groupVersion schema.GroupVersion, resource string, namespace string) dynamic.ResourceInterface {
-	client := cp.client.GetDynamicInterface().Resource(groupVersion.WithResource(resource))
+	client := cp.client.Resource(groupVersion.WithResource(resource))
 	if namespace != "" {
 		return client.Namespace(namespace)
 	} else {
