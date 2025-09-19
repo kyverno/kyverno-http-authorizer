@@ -22,7 +22,6 @@ type PolicyListener struct {
 	clientAddr                  string
 	client                      protov1alpha1.ValidatingPolicyServiceClient
 	conn                        *grpc.ClientConn
-	ctx                         context.Context
 	compiler                    vpolcompiler.Compiler
 	mu                          *sync.Mutex
 	policies                    map[string]engine.CompiledPolicy
@@ -33,8 +32,7 @@ type PolicyListener struct {
 	logger                      *logrus.Logger
 }
 
-func NewPolicyListener(ctx context.Context,
-	cancel context.CancelFunc,
+func NewPolicyListener(
 	controlPlaneAddr string,
 	clientAddr string,
 	compiler vpolcompiler.Compiler,
@@ -42,7 +40,6 @@ func NewPolicyListener(ctx context.Context,
 	controlPlaneReconnectWait int,
 	controlPlaneMaxDialInterval int) *PolicyListener {
 	return &PolicyListener{
-		ctx:                         ctx,
 		controlPlaneAddr:            controlPlaneAddr,
 		compiler:                    compiler,
 		logger:                      logger,
@@ -62,14 +59,14 @@ func (l *PolicyListener) CompiledPolicies(ctx context.Context) ([]engine.Compile
 	return l.sortPolicies(), nil
 }
 
-func (l *PolicyListener) Start() error {
+func (l *PolicyListener) Start(ctx context.Context) error {
 	b := backoff.NewExponentialBackOff()
 	b.InitialInterval = time.Duration(l.controlPlaneReconnectWait) * time.Second
 	b.MaxInterval = time.Duration(l.controlPlaneReconnectWait) * time.Second
 	if err := backoff.Retry(l.dial, b); err != nil {
 		return err
 	}
-	if err := l.listen(context.Background()); err != nil {
+	if err := l.listen(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -103,7 +100,7 @@ func (l *PolicyListener) listen(ctx context.Context) error {
 		defer wg.Done()
 		for {
 			select {
-			case <-l.ctx.Done():
+			case <-ctx.Done():
 				l.logger.Info("Stopping policy listener due to context cancellation")
 				stream.CloseSend()
 

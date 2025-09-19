@@ -67,7 +67,7 @@ func Command() *cobra.Command {
 					dclient, err := initK8sClients(ctx, cfg)
 
 					vpolCompiler := vpolcompiler.NewCompiler()
-					provider := listener.NewPolicyListener(ctx, cancel, controlPlaneAddr,
+					provider := listener.NewPolicyListener(controlPlaneAddr,
 						clientAddr, vpolCompiler,
 						logger, controlPlaneReconnectWait,
 						controlPlaneMaxDialInterval)
@@ -124,7 +124,7 @@ func Command() *cobra.Command {
 							case <-ctx.Done():
 								return
 							default:
-								if grpcErr = provider.Start(); grpcErr != nil {
+								if grpcErr = provider.Start(ctx); grpcErr != nil {
 									logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
 									time.Sleep(time.Second * 10)
 								}
