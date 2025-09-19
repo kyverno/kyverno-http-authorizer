@@ -108,11 +108,16 @@ func Command() *cobra.Command {
 						// cancel control plane grpc context at the end
 						defer grpcCancel()
 						for {
-							if grpcErr = provider.Start(); grpcErr != nil {
-								logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
-								time.Sleep(time.Second * 10)
+							select {
+							case <-grpcCtx.Done():
+								return
+							default:
+								if grpcErr = provider.Start(); grpcErr != nil {
+									logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
+									time.Sleep(time.Second * 10)
+								}
+								continue
 							}
-							continue
 						}
 					})
 					return nil
