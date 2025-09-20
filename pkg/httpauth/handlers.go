@@ -8,19 +8,27 @@ import (
 
 	httpauth "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
 	httpcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
-
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 	"github.com/sirupsen/logrus"
+
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 )
 
-type Authorizer struct {
+type authorizer struct {
 	provider    engine.Provider
 	logger      *logrus.Logger
 	resourceCtx resource.ContextInterface
 }
 
-func (a *Authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
+func NewAuthorizer(ctx resource.ContextInterface, p engine.Provider, logger *logrus.Logger) *authorizer {
+	return &authorizer{
+		provider:    p,
+		logger:      logger,
+		resourceCtx: ctx,
+	}
+}
+
+func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		a.logger.Infof("received request from %s", r.RemoteAddr)
 		reader := bufio.NewReader(r.Body)

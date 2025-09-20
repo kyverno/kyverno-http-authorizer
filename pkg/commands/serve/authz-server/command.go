@@ -74,8 +74,8 @@ func Command() *cobra.Command {
 
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
-					// ammar: split the authorizer and pass it as a dependency to this function
-					httpAuth := httpauth.NewServer(httpAuthAddress, provider, ctxprovider.NewContextProvider(dyn))
+					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), provider, logger)
+					httpAuth := httpauth.NewServer(httpAuthAddress, provider, a)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
 						// probes
