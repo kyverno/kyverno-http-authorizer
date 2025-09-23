@@ -1,27 +1,27 @@
 # kyverno-authz-server
 
-Kyverno policies based authorization plugin for Envoy ❤️
+Kyverno policies based HTTP authorization server ❤️
 
 ![Version: 0.0.0](https://img.shields.io/badge/Version-0.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: latest](https://img.shields.io/badge/AppVersion-latest-informational?style=flat-square)
 
-A plugin to enforce kyverno policies with Envoy. This plugin allows applying Kyverno policies to APIs managed by Envoy.
+A server to enforce kyverno policies for HTTP authorization. This server allows applying Kyverno policies to HTTP requests.
 
 ## Overview
 
-[Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy) is a L7 proxy and communication bus designed for large modern service oriented architectures . Envoy (v1.7.0+) supports an External Authorization filter which calls an authorization service to check if the incoming request is authorized or not. [External Authorization filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html) feature will help us to make a decision based on Kyverno policies .
+This authorization server provides HTTP-based policy enforcement using Kyverno policies. It can be integrated with various proxies and gateways that support external authorization services to make authorization decisions based on Kyverno policies.
 
 ## Installing the Chart
 
-Add `kyverno-envoy-plugin` Helm repository:
+Add `kyverno-http-authorizer` Helm repository:
 
 ```shell
-helm repo add kyverno-json https://kyverno.github.io/kyverno-envoy-plugin/
+helm repo add kyverno-http-authorizer https://kyverno.github.io/kyverno-http-authorizer/
 ```
 
 Install `kyverno-authz-server` Helm chart:
 
 ```shell
-helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno-envoy-plugin/kyverno-authz-server
+helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno-http-authorizer/kyverno-authz-server
 ```
 
 ## Values
@@ -56,7 +56,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 | pod.affinity | object | `{}` | Pod affinity constraints. |
 | pod.nodeAffinity | object | `{}` | Node affinity constraints. |
 | containers.server.image.registry | string | `"ghcr.io"` | Image registry |
-| containers.server.image.repository | string | `"kyverno/kyverno-envoy-plugin"` | Image repository |
+| containers.server.image.repository | string | `"kyverno/kyverno-http-authorizer"` | Image repository |
 | containers.server.image.tag | string | `nil` | Image tag Defaults to appVersion in Chart.yaml if omitted |
 | containers.server.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
 | containers.server.resources.limits | object | `{"memory":"384Mi"}` | Pod resource limits |
@@ -80,7 +80,7 @@ helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno
 
 ## Source Code
 
-* <https://github.com/kyverno/kyverno-envoy-plugin>
+* <https://github.com/kyverno/kyverno-http-authorizer>
 
 ## Requirements
 
