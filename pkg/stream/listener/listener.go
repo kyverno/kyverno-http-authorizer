@@ -15,6 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type PolicyListener struct {
@@ -29,6 +30,7 @@ type PolicyListener struct {
 	connEstablished             bool
 	controlPlaneReconnectWait   int
 	controlPlaneMaxDialInterval int
+	healthCheckInterval         int
 	logger                      *logrus.Logger
 }
 
@@ -38,7 +40,8 @@ func NewPolicyListener(
 	compiler vpolcompiler.Compiler,
 	logger *logrus.Logger,
 	controlPlaneReconnectWait int,
-	controlPlaneMaxDialInterval int) *PolicyListener {
+	controlPlaneMaxDialInterval int,
+	healthCheckInterval int) *PolicyListener {
 	return &PolicyListener{
 		controlPlaneAddr:            controlPlaneAddr,
 		compiler:                    compiler,
@@ -47,6 +50,7 @@ func NewPolicyListener(
 		mu:                          &sync.Mutex{},
 		controlPlaneReconnectWait:   controlPlaneReconnectWait,
 		controlPlaneMaxDialInterval: controlPlaneMaxDialInterval,
+		healthCheckInterval:         healthCheckInterval,
 		policies:                    make(map[string]engine.CompiledPolicy),
 		sortPolicies: func() []engine.CompiledPolicy {
 			return nil
@@ -66,6 +70,7 @@ func (l *PolicyListener) Start(ctx context.Context) error {
 	if err := backoff.Retry(l.dial, b); err != nil {
 		return err
 	}
+	go l.sendHealthChecks(ctx) // start sending health checks
 	if err := l.listen(ctx); err != nil {
 		return err
 	}
@@ -147,8 +152,7 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 			return stream.MapToSortedSlice(l.policies)
 		})
 	}
-	// receiving a policy with nil spec means a deletion
-	if req.Spec == nil {
+	if req.Delete {
 		l.logger.Info("deleting policy: ", req.Name)
 		l.mu.Lock()
 		delete(l.policies, req.Name)
@@ -166,4 +170,17 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 	defer l.mu.Unlock()
 	l.policies[req.Name] = compiledPolicy
 	resetSortPolicies()
+}
+
+func (l *PolicyListener) sendHealthChecks(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Second * time.Duration(l.healthCheckInterval)):
+			l.client.HealthCheck(ctx, &protov1alpha1.HealthCheckRequest{
+				ClientAddress: l.clientAddr,
+				Time:          timestamppb.Now()})
+		}
+	}
 }

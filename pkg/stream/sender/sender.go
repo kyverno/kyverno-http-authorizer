@@ -17,29 +17,49 @@ import (
 
 type PolicySender struct {
 	protov1alpha1.UnimplementedValidatingPolicyServiceServer
-	polMu    *sync.Mutex
-	policies map[string]*protov1alpha1.ValidatingPolicy
+	polMu          *sync.Mutex
+	policies       map[string]*protov1alpha1.ValidatingPolicy
+	healthCheckMap map[string]time.Time
 
 	cxnMu   *sync.Mutex
 	cxnsMap map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]
 
-	ctx                   context.Context
-	logger                *logrus.Logger
-	initialSendPolicyWait int
-	maxSendPolicyInterval int
-	sortPolicies          func() []*protov1alpha1.ValidatingPolicy
+	ctx                       context.Context
+	logger                    *logrus.Logger
+	initialSendPolicyWait     int
+	maxSendPolicyInterval     int
+	clientFlushInterval       int // how often we remove unhealthy clients from the map
+	maxClientInactiveDuration int // how long should we wait before deciding this client is unhealthy
+	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
 }
 
-func NewPolicySender(ctx context.Context, logger *logrus.Logger, initialSendPolicyWait, maxSendPolicyInterval int) *PolicySender {
+func NewPolicySender(ctx context.Context, logger *logrus.Logger,
+	initialSendPolicyWait,
+	maxSendPolicyInterval,
+	clientFlushInterval,
+	maxClientInactiveDuration int) *PolicySender {
 	return &PolicySender{
-		polMu:                 &sync.Mutex{},
-		cxnMu:                 &sync.Mutex{},
-		logger:                logger,
-		ctx:                   ctx,
-		policies:              make(map[string]*protov1alpha1.ValidatingPolicy),
-		cxnsMap:               make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
-		initialSendPolicyWait: initialSendPolicyWait,
-		maxSendPolicyInterval: maxSendPolicyInterval,
+		polMu:                     &sync.Mutex{},
+		cxnMu:                     &sync.Mutex{},
+		logger:                    logger,
+		ctx:                       ctx,
+		policies:                  make(map[string]*protov1alpha1.ValidatingPolicy),
+		cxnsMap:                   make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
+		initialSendPolicyWait:     initialSendPolicyWait,
+		maxSendPolicyInterval:     maxSendPolicyInterval,
+		clientFlushInterval:       clientFlushInterval,
+		maxClientInactiveDuration: maxClientInactiveDuration,
+	}
+}
+
+func (s *PolicySender) StartHealthCheckMonitor(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Second * time.Duration(s.clientFlushInterval)):
+			s.deleteInactive()
+		}
 	}
 }
 
@@ -97,7 +117,16 @@ func (s *PolicySender) DeletePolicy(polName string) {
 	resetSortPolicies()
 }
 
-// ammar: add health check rpc
+func (s *PolicySender) HealthCheck(ctx context.Context, r *protov1alpha1.HealthCheckRequest) (*protov1alpha1.HealthCheckResponse, error) {
+	if r.ClientAddress == "" || r.Time == nil {
+		return nil, nil // invalid request, do nothing
+	}
+	t, ok := s.healthCheckMap[r.ClientAddress]
+	if !ok || r.Time.AsTime().After(t) {
+		s.healthCheckMap[r.ClientAddress] = r.Time.AsTime()
+	}
+	return &protov1alpha1.HealthCheckResponse{}, nil
+}
 
 func (s *PolicySender) ValidatingPoliciesStream(stream grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]) error {
 	for {
@@ -148,4 +177,23 @@ func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1al
 	b.InitialInterval = time.Duration(s.initialSendPolicyWait) * time.Second
 	b.MaxInterval = time.Duration(s.maxSendPolicyInterval) * time.Second
 	return backoff.Retry(operation, b)
+}
+
+func (s *PolicySender) deleteInactive() {
+	defer s.cxnMu.Unlock()
+	inactiveClients := s.getInactiveClients()
+	s.cxnMu.Lock()
+	for _, c := range inactiveClients {
+		delete(s.cxnsMap, c)
+	}
+}
+
+func (s *PolicySender) getInactiveClients() []string {
+	clientsToDelete := []string{}
+	for c, t := range s.healthCheckMap {
+		if elapsed := time.Since(t); elapsed > time.Second*time.Duration(s.maxClientInactiveDuration) {
+			clientsToDelete = append(clientsToDelete, c)
+		}
+	}
+	return clientsToDelete
 }

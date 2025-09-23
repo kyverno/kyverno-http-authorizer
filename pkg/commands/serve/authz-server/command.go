@@ -30,6 +30,7 @@ func Command() *cobra.Command {
 	var controlPlaneAddr string
 	var controlPlaneReconnectWait int
 	var controlPlaneMaxDialInterval int
+	var healthCheckInterval int
 	// var clientAddr string
 	command := &cobra.Command{
 		Use:   "authz-server",
@@ -70,7 +71,8 @@ func Command() *cobra.Command {
 					provider := listener.NewPolicyListener(controlPlaneAddr,
 						clientAddr, vpolCompiler,
 						logger, controlPlaneReconnectWait,
-						controlPlaneMaxDialInterval)
+						controlPlaneMaxDialInterval,
+						healthCheckInterval)
 
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
@@ -140,6 +142,7 @@ func Command() *cobra.Command {
 	}
 	command.Flags().IntVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3, "Duration in seconds to wait before retrying connecting to the control plane")
 	command.Flags().IntVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
+	command.Flags().IntVar(&healthCheckInterval, "health-check-interval", 30, "Interval for sending health checks")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
