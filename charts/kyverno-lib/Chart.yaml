@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kyverno-lib
+name: kyverno-lib # ammar: stupid ai missed this file
 description: Kyverno policies based authorization plugin for Envoy ❤️
 icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
 home: https://kyverno.github.io/kyverno-envoy-plugin
