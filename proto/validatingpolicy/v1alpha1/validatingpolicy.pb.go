@@ -9,6 +9,7 @@ package v1alpha1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
@@ -545,11 +546,99 @@ func (x *ValidatingPolicyStreamRequest) GetClientAddress() string {
 	return ""
 }
 
+type HealthCheckRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ClientAddress string                 `protobuf:"bytes,1,opt,name=client_address,json=clientAddress,proto3" json:"client_address,omitempty"`
+	Time          *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=time,proto3" json:"time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckRequest) Reset() {
+	*x = HealthCheckRequest{}
+	mi := &file_validatingpolicy_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckRequest) ProtoMessage() {}
+
+func (x *HealthCheckRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_validatingpolicy_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckRequest.ProtoReflect.Descriptor instead.
+func (*HealthCheckRequest) Descriptor() ([]byte, []int) {
+	return file_validatingpolicy_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *HealthCheckRequest) GetClientAddress() string {
+	if x != nil {
+		return x.ClientAddress
+	}
+	return ""
+}
+
+func (x *HealthCheckRequest) GetTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Time
+	}
+	return nil
+}
+
+type HealthCheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HealthCheckResponse) Reset() {
+	*x = HealthCheckResponse{}
+	mi := &file_validatingpolicy_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HealthCheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HealthCheckResponse) ProtoMessage() {}
+
+func (x *HealthCheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_validatingpolicy_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HealthCheckResponse.ProtoReflect.Descriptor instead.
+func (*HealthCheckResponse) Descriptor() ([]byte, []int) {
+	return file_validatingpolicy_proto_rawDescGZIP(), []int{7}
+}
+
 var File_validatingpolicy_proto protoreflect.FileDescriptor
 
 const file_validatingpolicy_proto_rawDesc = "" +
 	"\n" +
-	"\x16validatingpolicy.proto\x12\x15kyverno.http.v1alpha1\x1a\x1egoogle/protobuf/wrappers.proto\"\xad\x03\n" +
+	"\x16validatingpolicy.proto\x12\x15kyverno.http.v1alpha1\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xad\x03\n" +
 	"\x14ValidatingPolicySpec\x12C\n" +
 	"\vvalidations\x18\x02 \x03(\v2!.kyverno.http.v1alpha1.ValidationR\vvalidations\x12T\n" +
 	"\x0efailure_policy\x18\x03 \x01(\x0e2(.kyverno.http.v1alpha1.FailurePolicyTypeH\x00R\rfailurePolicy\x88\x01\x01\x12P\n" +
@@ -584,7 +673,11 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x06delete\x18\x02 \x01(\bR\x06delete\x12?\n" +
 	"\x04spec\x18\x03 \x01(\v2+.kyverno.http.v1alpha1.ValidatingPolicySpecR\x04spec\"F\n" +
 	"\x1dValidatingPolicyStreamRequest\x12%\n" +
-	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress*v\n" +
+	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress\"k\n" +
+	"\x12HealthCheckRequest\x12%\n" +
+	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress\x12.\n" +
+	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\"\x15\n" +
+	"\x13HealthCheckResponse*v\n" +
 	"\x11FailurePolicyType\x12#\n" +
 	"\x1fFAILURE_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aFAILURE_POLICY_TYPE_IGNORE\x10\x01\x12\x1c\n" +
@@ -597,9 +690,10 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x0fMatchPolicyType\x12!\n" +
 	"\x1dMATCH_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17MATCH_POLICY_TYPE_EXACT\x10\x01\x12 \n" +
-	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\x98\x01\n" +
+	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\xfe\x01\n" +
 	"\x17ValidatingPolicyService\x12}\n" +
-	"\x18ValidatingPoliciesStream\x124.kyverno.http.v1alpha1.ValidatingPolicyStreamRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy(\x010\x01B@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
+	"\x18ValidatingPoliciesStream\x124.kyverno.http.v1alpha1.ValidatingPolicyStreamRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy(\x010\x01\x12d\n" +
+	"\vHealthCheck\x12).kyverno.http.v1alpha1.HealthCheckRequest\x1a*.kyverno.http.v1alpha1.HealthCheckResponseB@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
 
 var (
 	file_validatingpolicy_proto_rawDescOnce sync.Once
@@ -614,7 +708,7 @@ func file_validatingpolicy_proto_rawDescGZIP() []byte {
 }
 
 var file_validatingpolicy_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_validatingpolicy_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_validatingpolicy_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_validatingpolicy_proto_goTypes = []any{
 	(FailurePolicyType)(0),                // 0: kyverno.http.v1alpha1.FailurePolicyType
 	(ValidationAction)(0),                 // 1: kyverno.http.v1alpha1.ValidationAction
@@ -625,21 +719,27 @@ var file_validatingpolicy_proto_goTypes = []any{
 	(*Variable)(nil),                      // 6: kyverno.http.v1alpha1.Variable
 	(*ValidatingPolicy)(nil),              // 7: kyverno.http.v1alpha1.ValidatingPolicy
 	(*ValidatingPolicyStreamRequest)(nil), // 8: kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
+	(*HealthCheckRequest)(nil),            // 9: kyverno.http.v1alpha1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),           // 10: kyverno.http.v1alpha1.HealthCheckResponse
+	(*timestamppb.Timestamp)(nil),         // 11: google.protobuf.Timestamp
 }
 var file_validatingpolicy_proto_depIdxs = []int32{
-	4, // 0: kyverno.http.v1alpha1.ValidatingPolicySpec.validations:type_name -> kyverno.http.v1alpha1.Validation
-	0, // 1: kyverno.http.v1alpha1.ValidatingPolicySpec.failure_policy:type_name -> kyverno.http.v1alpha1.FailurePolicyType
-	5, // 2: kyverno.http.v1alpha1.ValidatingPolicySpec.match_conditions:type_name -> kyverno.http.v1alpha1.MatchCondition
-	6, // 3: kyverno.http.v1alpha1.ValidatingPolicySpec.variables:type_name -> kyverno.http.v1alpha1.Variable
-	1, // 4: kyverno.http.v1alpha1.ValidatingPolicySpec.validation_actions:type_name -> kyverno.http.v1alpha1.ValidationAction
-	3, // 5: kyverno.http.v1alpha1.ValidatingPolicy.spec:type_name -> kyverno.http.v1alpha1.ValidatingPolicySpec
-	8, // 6: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:input_type -> kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
-	7, // 7: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicy
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	4,  // 0: kyverno.http.v1alpha1.ValidatingPolicySpec.validations:type_name -> kyverno.http.v1alpha1.Validation
+	0,  // 1: kyverno.http.v1alpha1.ValidatingPolicySpec.failure_policy:type_name -> kyverno.http.v1alpha1.FailurePolicyType
+	5,  // 2: kyverno.http.v1alpha1.ValidatingPolicySpec.match_conditions:type_name -> kyverno.http.v1alpha1.MatchCondition
+	6,  // 3: kyverno.http.v1alpha1.ValidatingPolicySpec.variables:type_name -> kyverno.http.v1alpha1.Variable
+	1,  // 4: kyverno.http.v1alpha1.ValidatingPolicySpec.validation_actions:type_name -> kyverno.http.v1alpha1.ValidationAction
+	3,  // 5: kyverno.http.v1alpha1.ValidatingPolicy.spec:type_name -> kyverno.http.v1alpha1.ValidatingPolicySpec
+	11, // 6: kyverno.http.v1alpha1.HealthCheckRequest.time:type_name -> google.protobuf.Timestamp
+	8,  // 7: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:input_type -> kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
+	9,  // 8: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:input_type -> kyverno.http.v1alpha1.HealthCheckRequest
+	7,  // 9: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicy
+	10, // 10: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:output_type -> kyverno.http.v1alpha1.HealthCheckResponse
+	9,  // [9:11] is the sub-list for method output_type
+	7,  // [7:9] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_validatingpolicy_proto_init() }
@@ -655,7 +755,7 @@ func file_validatingpolicy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_validatingpolicy_proto_rawDesc), len(file_validatingpolicy_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -5,6 +5,7 @@ package kyverno.http.v1alpha1;
 option go_package = "github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1";
 
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
 
 // ValidatingPolicySpec defines the desired behavior of the ValidatingPolicy.
 message ValidatingPolicySpec {
@@ -91,7 +92,15 @@ message ValidatingPolicyStreamRequest {
   string client_address = 1;
 }
 
+message HealthCheckRequest {
+  string client_address = 1;
+  google.protobuf.Timestamp time = 2;
+}
+
+message HealthCheckResponse {}
+
 // ValidatingPolicyService provides bidirectional communication for validating policies
 service ValidatingPolicyService {
   rpc ValidatingPoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }
