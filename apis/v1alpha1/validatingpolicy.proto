@@ -32,6 +32,7 @@ enum FailurePolicyType {
   FAILURE_POLICY_TYPE_FAIL = 2;
 }
 
+// ammar: turn those to strings
 // ValidationAction defines actions for policy violations
 enum ValidationAction {
   VALIDATION_ACTION_UNSPECIFIED = 0;
@@ -39,14 +40,6 @@ enum ValidationAction {
   VALIDATION_ACTION_AUDIT = 2;
   VALIDATION_ACTION_WARN = 3;
 }
-
-// MatchPolicyType defines resource matching behavior
-enum MatchPolicyType {
-  MATCH_POLICY_TYPE_UNSPECIFIED = 0;
-  MATCH_POLICY_TYPE_EXACT = 1;
-  MATCH_POLICY_TYPE_EQUIVALENT = 2;
-}
-
 
 // Validation represents a validation rule
 message Validation {
