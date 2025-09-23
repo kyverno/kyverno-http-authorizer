@@ -119,6 +119,10 @@ func Command() *cobra.Command {
 						defer cancel()
 						grpcErr = grpc.Run(ctx)
 					})
+					group.StartWithContext(ctx, func(ctx context.Context) {
+						// start dead client flush
+						s.StartHealthCheckMonitor(ctx)
+					})
 					return nil
 				}(ctx)
 				return multierr.Combine(err, httpErr, grpcErr, mgrErr)
