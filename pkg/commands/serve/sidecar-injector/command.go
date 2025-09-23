@@ -32,8 +32,9 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
 	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
 	command.Flags().StringVar(&sidecarImage, "sidecar-image", "", "Image to use in sidecar")
-	// ammar: make this a sensible default
-	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "kyverno-authz-server.default.svc:9081", "The control plane address to inject into the sidecars")
+	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "The control plane address to inject into the sidecars")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
+
+	_ = command.MarkFlagRequired("control-plane-address")
 	return command
 }

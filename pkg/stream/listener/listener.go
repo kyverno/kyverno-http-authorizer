@@ -181,6 +181,7 @@ func (l *PolicyListener) sendHealthChecks(ctx context.Context) {
 			l.client.HealthCheck(ctx, &protov1alpha1.HealthCheckRequest{
 				ClientAddress: l.clientAddr,
 				Time:          timestamppb.Now()})
+			continue
 		}
 	}
 }
