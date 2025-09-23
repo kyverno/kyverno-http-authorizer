@@ -4,6 +4,6 @@
 /.tools/
 /.venv/
 /charts/*/charts
-/kyverno-envoy-plugin
+/kyverno-http-authorizer
 /website/site/
 __debug*
