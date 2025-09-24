@@ -44,6 +44,7 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger,
 		logger:                    logger,
 		ctx:                       ctx,
 		policies:                  make(map[string]*protov1alpha1.ValidatingPolicy),
+		healthCheckMap:            make(map[string]time.Time),
 		cxnsMap:                   make(map[string]grpc.BidiStreamingServer[protov1alpha1.ValidatingPolicyStreamRequest, protov1alpha1.ValidatingPolicy]),
 		initialSendPolicyWait:     initialSendPolicyWait,
 		maxSendPolicyInterval:     maxSendPolicyInterval,
@@ -121,6 +122,7 @@ func (s *PolicySender) HealthCheck(ctx context.Context, r *protov1alpha1.HealthC
 	if r.ClientAddress == "" || r.Time == nil {
 		return nil, nil // invalid request, do nothing
 	}
+	s.logger.Debugf("got health check message from %s, time: %s", r.ClientAddress, r.Time.AsTime().Format(time.RFC3339))
 	t, ok := s.healthCheckMap[r.ClientAddress]
 	if !ok || r.Time.AsTime().After(t) {
 		s.healthCheckMap[r.ClientAddress] = r.Time.AsTime()
@@ -184,7 +186,9 @@ func (s *PolicySender) deleteInactive() {
 	inactiveClients := s.getInactiveClients()
 	s.cxnMu.Lock()
 	for _, c := range inactiveClients {
+		s.logger.Debugf("deleting %s from active clients", c)
 		delete(s.cxnsMap, c)
+		delete(s.healthCheckMap, c)
 	}
 }
 

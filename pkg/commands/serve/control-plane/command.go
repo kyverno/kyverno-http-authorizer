@@ -131,7 +131,7 @@ func Command() *cobra.Command {
 	}
 	command.Flags().IntVar(&initialSendPolicyWait, "initial-send-wait", 5, "Duration in seconds to wait before retrying a send to a client")
 	command.Flags().IntVar(&maxSendPolicyInterval, "max-send-interval", 10, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
-	command.Flags().IntVar(&clientFlushInterval, "client-flush-interval", 180, "Interval for how often to remove dead client connections")
+	command.Flags().IntVar(&clientFlushInterval, "client-flush-interval", 180, "Interval for how often to remove dead client connections") // ammar: turn those to 10s
 	command.Flags().IntVar(&maxClientInactiveDuration, "max-client-inactive-duration", 240, "Duration in seconds to wait before declaring a client as inactive")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
