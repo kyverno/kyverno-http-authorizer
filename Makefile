@@ -8,7 +8,6 @@ PACKAGE                            ?= github.com/$(ORG)/kyverno-http-authorizer
 CLI_BIN                            := kyverno-http-authorizer
 CGO_ENABLED                        ?= 0
 GOOS                               ?= $(shell go env GOOS)
-CRDS_PATH                          := .crds
 ifdef VERSION
 LD_FLAGS                           := "-s -w -X $(PACKAGE)/pkg/version.BuildVersion=$(VERSION)"
 else
@@ -33,10 +32,6 @@ KIND                               := $(TOOLS_DIR)/kind
 KIND_VERSION                       := v0.29.0
 KO                                 ?= $(TOOLS_DIR)/ko
 KO_VERSION                         ?= v0.15.1
-CONTROLLER_GEN                     ?= $(TOOLS_DIR)/controller-gen
-CONTROLLER_GEN_VERSION             := latest
-REGISTER_GEN                       ?= $(TOOLS_DIR)/register-gen
-REGISTER_GEN_VERSION               := v0.33.1
 REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
 REFERENCE_DOCS_VERSION             := latest
 PIP                                ?= "pip"
@@ -59,12 +54,6 @@ $(KO):
 	@echo Install ko... >&2
 	@GOBIN=$(TOOLS_DIR) go install github.com/google/ko@$(KO_VERSION)
 
-$(CONTROLLER_GEN):
-	@GOBIN=$(TOOLS_DIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
-
-$(REGISTER_GEN):
-	@GOBIN=$(TOOLS_DIR) go install k8s.io/code-generator/cmd/register-gen@$(REGISTER_GEN_VERSION)
-
 $(REFERENCE_DOCS):
 	@echo Install genref... >&2
 	@GOBIN=$(TOOLS_DIR) go install github.com/kubernetes-sigs/reference-docs/genref@$(REFERENCE_DOCS_VERSION)
@@ -74,8 +63,6 @@ install-tools: ## Install tools
 install-tools: $(HELM)
 install-tools: $(KIND)
 install-tools: $(KO)
-install-tools: $(CONTROLLER_GEN)
-install-tools: $(REGISTER_GEN)
 install-tools: $(REFERENCE_DOCS)
 
 .PHONY: clean-tools
@@ -86,18 +73,6 @@ clean-tools: ## Remove installed tools
 ###########
 # CODEGEN #
 ###########
-
-.PHONY: codegen-crds
-codegen-crds: ## Generate CRDs
-codegen-crds: $(CONTROLLER_GEN)
-codegen-crds: $(REGISTER_GEN)
-	@echo Generate CRDs... >&2
-	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... object
-	@$(CONTROLLER_GEN) paths=./apis/v1alpha1/... crd:crdVersions=v1,ignoreUnexportedFields=true,generateEmbeddedObjectMeta=false output:dir=$(CRDS_PATH)
-	@$(REGISTER_GEN) --go-header-file=./.hack/boilerplate.go.txt --output-file zz_generated.register.go ./apis/...
-	@echo Copy generated CRDs to embed in the binary... >&2
-	@rm -rf pkg/data/crds && mkdir -p pkg/data/crds
-	@cp $(CRDS_PATH)/* pkg/data/crds
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
@@ -110,80 +85,18 @@ codegen-helm-docs: ## Generate helm docs
 	@echo Generate helm docs... >&2
 	@docker run -v ${PWD}/charts:/work -w /work jnorwood/helm-docs:v1.11.0 -s file
 
-.PHONY: codegen-helm-crds
-codegen-helm-crds: codegen-crds ## Generate helm CRDs
-	@echo Generate helm crds... >&2
-	@cat $(CRDS_PATH)/* \
-		| $(SED) -e '1i{{- if .Values.crds.install }}' \
-		| $(SED) -e '$$a{{- end }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
- 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "kyverno-authz-server.labels" . | nindent 4 }}' \
- 		> ./charts/kyverno-authz-server/templates/crds.yaml
-	@cat $(CRDS_PATH)/* \
-		| $(SED) -e '1i{{- if .Values.crds.install }}' \
-		| $(SED) -e '$$a{{- end }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  annotations:/a \ \ \ \ {{- with .Values.crds.annotations }}' \
- 		| $(SED) -e '/^  annotations:/i \ \ labels:' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- end }}' \
- 		| $(SED) -e '/^  labels:/a \ \ \ \ {{- toYaml . | nindent 4 }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- with .Values.crds.labels }}' \
-		| $(SED) -e '/^  labels:/a \ \ \ \ {{- include "sidecar-injector.labels" . | nindent 4 }}' \
- 		> ./charts/kyverno-sidecar-injector/templates/crds.yaml
-
 .PHONY: codegen-api-docs
 codegen-api-docs: ## Generate markdown API docs
 codegen-api-docs: $(REFERENCE_DOCS)
-codegen-api-docs: codegen-crds
 	@echo Generate api docs... >&2
 	@rm -rf ./website/docs/reference/apis
 	@cd ./website/apis && $(REFERENCE_DOCS) -c config.yaml -f markdown -o ../docs/reference/apis
 
-.PHONY: codegen-schemas-openapi
-codegen-schemas-openapi: ## Generate openapi schemas (v2 and v3)
-codegen-schemas-openapi: CURRENT_CONTEXT = $(shell kubectl config current-context)
-codegen-schemas-openapi: codegen-crds
-codegen-schemas-openapi: $(KIND)
-	@echo Generate openapi schema... >&2
-	@rm -rf ./.temp/.schemas
-	@mkdir -p ./.temp/.schemas/openapi/v2
-	@mkdir -p ./.temp/.schemas/openapi/v3/apis/envoy.kyverno.io
-	@$(KIND) create cluster --name schema --image $(KIND_IMAGE)
-	@kubectl create -f $(CRDS_PATH)
-	@sleep 15
-	@kubectl get --raw /openapi/v2 > ./.temp/.schemas/openapi/v2/schema.json
-	@kubectl get --raw /openapi/v3/apis/envoy.kyverno.io/v1alpha1 > ./.temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json
-	@$(KIND) delete cluster --name schema
-	@kubectl config use-context $(CURRENT_CONTEXT) || true
-
-.PHONY: codegen-schemas-json
-codegen-schemas-json: ## Generate json schemas
-codegen-schemas-json: codegen-schemas-openapi
-	@echo Generate json schema... >&2
-	@$(PIP) install -r requirements.txt
-	@rm -rf ./.temp/.schemas/json
-	@rm -rf ./.schemas/json
-	@openapi2jsonschema .temp/.schemas/openapi/v3/apis/envoy.kyverno.io/v1alpha1.json --kubernetes --strict --stand-alone --expanded -o ./.temp/.schemas/json
-	@mkdir -p ./.schemas/json
-	@cp ./.temp/.schemas/json/authorizationpolicy-envoy-*.json ./.schemas/json
-	@cp ./.temp/.schemas/json/validatingpolicy-envoy-*.json ./.schemas/json
-
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
 codegen: codegen-mkdocs
-codegen: codegen-crds
-codegen: codegen-helm-crds
 codegen: codegen-helm-docs
 codegen: codegen-api-docs
-codegen: codegen-schemas-openapi
-codegen: codegen-schemas-json
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify all generated code and docs are up to date
@@ -336,19 +249,6 @@ install-cluster-issuer:
 	@echo Install cert-manager cluster issuer... >&2
 	@kubectl apply -f .manifests/cert-manager/cluster-issuer.yaml
 
-#########
-# ISTIO #
-#########
-
-.PHONY: install-istio
-install-istio: ## Install istio
-install-istio: $(HELM)
-	@echo Install istio... >&2
-	@$(HELM) upgrade --install istio-base --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts base
-	@$(HELM) upgrade --install istiod --namespace istio-system --create-namespace --wait --repo https://istio-release.storage.googleapis.com/charts istiod \
-		--set meshConfig.extensionProviders[0].name=kyverno-authz-server \
-		--set meshConfig.extensionProviders[0].envoyExtAuthzGrpc.service=$(KYVERNO_AUTHZ_SERVICE) \
-		--set-string meshConfig.extensionProviders[0].envoyExtAuthzGrpc.port=9081
 
 ########
 # HELM #
