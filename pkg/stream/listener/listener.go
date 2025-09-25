@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	policyapi "github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream"
@@ -160,7 +160,7 @@ func (l *PolicyListener) processPolicy(req *protov1alpha1.ValidatingPolicy) {
 		resetSortPolicies()
 		return
 	}
-	vpol := v1alpha1.FromProto(req)
+	vpol := policyapi.FromProto(req)
 	compiledPolicy, err := l.compiler.Compile(vpol)
 	if err != nil {
 		l.logger.Errorf("failed to compile policy %s: %s", req.Name, err)

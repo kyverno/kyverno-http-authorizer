@@ -5,10 +5,10 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
-	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	authzcel "github.com/kyverno/kyverno-http-authorizer/pkg/cel"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	httpreq "github.com/kyverno/kyverno/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
 	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
@@ -99,7 +99,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 		path := path.Child("validations")
 		for i, rule := range policy.Spec.Validations {
 			path := path.Index(i)
-			program, errs := compileAuthorization(path, rule, env, policy.Spec.EvaluationMode())
+			program, errs := compileAuthorization(path, rule, env)
 			if errs != nil {
 				return nil, append(allErrs, errs...)
 			}
@@ -114,7 +114,7 @@ func (c *compiler) Compile(policy *v1alpha1.ValidatingPolicy) (engine.CompiledPo
 	}, nil
 }
 
-func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env, mode v1alpha1.EvaluationMode) (cel.Program, field.ErrorList) {
+func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validation, env *cel.Env) (cel.Program, field.ErrorList) {
 	var allErrs field.ErrorList
 	{
 		path := path.Child("expression")
@@ -123,12 +123,9 @@ func compileAuthorization(path *field.Path, rule admissionregistrationv1.Validat
 			return nil, append(allErrs, field.Invalid(path, rule.Expression, err.Error()))
 		}
 
-		switch mode {
-		case v1alpha1.EvaluationModeHTTP:
-			if !ast.OutputType().IsExactType(http.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
-				msg := fmt.Sprintf("rule response output is expected to be of type %s", http.ResponseType.TypeName())
-				return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
-			}
+		if !ast.OutputType().IsExactType(http.ResponseType) && !ast.OutputType().IsExactType(types.NullType) {
+			msg := fmt.Sprintf("rule response output is expected to be of type %s", http.ResponseType.TypeName())
+			return nil, append(allErrs, field.Invalid(path, rule.Expression, msg))
 		}
 
 		prog, err := env.Program(ast)

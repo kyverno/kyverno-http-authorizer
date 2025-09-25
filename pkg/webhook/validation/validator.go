@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	policyapi "github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -42,7 +43,7 @@ func (*validator) ValidateDelete(ctx context.Context, obj runtime.Object) (admis
 }
 
 func (v *validator) validateVpol(policy *v1alpha1.ValidatingPolicy) error {
-	if policy.Spec.EvaluationConfiguration != nil && policy.Spec.EvaluationConfiguration.Mode == v1alpha1.EvaluationModeHTTP {
+	if policy.Spec.EvaluationConfiguration != nil && policy.Spec.EvaluationConfiguration.Mode == policyapi.EvaluationModeHTTP {
 		if allErrs := v.compileVpol(policy); len(allErrs) > 0 {
 			return apierrors.NewInvalid(
 				v1alpha1.SchemeGroupVersion.WithKind("ValidatingPolicy").GroupKind(),
