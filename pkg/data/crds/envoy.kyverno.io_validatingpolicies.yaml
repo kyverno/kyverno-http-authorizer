@@ -1,5 +1,5 @@
 ---
-apiVersion: apiextensions.k8s.io/v1
+apiVersion: apiextensions.k8s.io/v1 # ammar: replace with the validating policy type
 kind: CustomResourceDefinition
 metadata:
   annotations:
