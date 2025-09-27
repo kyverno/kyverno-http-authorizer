@@ -3,6 +3,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hairyhenderson/go-fsimpl"
 	"github.com/hairyhenderson/go-fsimpl/filefs"
@@ -35,10 +36,10 @@ func Command() *cobra.Command {
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalPolicySources []string
 	var kubePolicySource bool
-	var initialSendPolicyWait int
-	var maxSendPolicyInterval int
-	var maxClientInactiveDuration int
-	var clientFlushInterval int
+	var initialSendPolicyWait time.Duration
+	var maxSendPolicyInterval time.Duration
+	var maxClientInactiveDuration time.Duration
+	var clientFlushInterval time.Duration
 	command := &cobra.Command{
 		Use:   "control-plane",
 		Short: "Start the Kyverno HTTP authorizer control plane",
@@ -129,10 +130,10 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().IntVar(&initialSendPolicyWait, "initial-send-wait", 5, "Duration in seconds to wait before retrying a send to a client")
-	command.Flags().IntVar(&maxSendPolicyInterval, "max-send-interval", 10, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
-	command.Flags().IntVar(&clientFlushInterval, "client-flush-interval", 180, "Interval for how often to remove dead client connections") // ammar: turn those to 10s
-	command.Flags().IntVar(&maxClientInactiveDuration, "max-client-inactive-duration", 240, "Duration in seconds to wait before declaring a client as inactive")
+	command.Flags().DurationVar(&initialSendPolicyWait, "initial-send-wait", 5*time.Second, "Duration to wait before retrying a send to a client")
+	command.Flags().DurationVar(&maxSendPolicyInterval, "max-send-interval", 10*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
+	command.Flags().DurationVar(&clientFlushInterval, "client-flush-interval", 180*time.Second, "Interval for how often to remove dead client connections")
+	command.Flags().DurationVar(&maxClientInactiveDuration, "max-client-inactive-duration", 240*time.Second, "Duration to wait before declaring a client as inactive")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")

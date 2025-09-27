@@ -28,9 +28,9 @@ type PolicyListener struct {
 	policies                    map[string]engine.CompiledPolicy
 	sortPolicies                func() []engine.CompiledPolicy
 	connEstablished             bool
-	controlPlaneReconnectWait   int
-	controlPlaneMaxDialInterval int
-	healthCheckInterval         int
+	controlPlaneReconnectWait   time.Duration
+	controlPlaneMaxDialInterval time.Duration
+	healthCheckInterval         time.Duration
 	logger                      *logrus.Logger
 }
 
@@ -39,9 +39,9 @@ func NewPolicyListener(
 	clientAddr string,
 	compiler vpolcompiler.Compiler,
 	logger *logrus.Logger,
-	controlPlaneReconnectWait int,
-	controlPlaneMaxDialInterval int,
-	healthCheckInterval int) *PolicyListener {
+	controlPlaneReconnectWait,
+	controlPlaneMaxDialInterval,
+	healthCheckInterval time.Duration) *PolicyListener {
 	return &PolicyListener{
 		controlPlaneAddr:            controlPlaneAddr,
 		compiler:                    compiler,
@@ -65,8 +65,8 @@ func (l *PolicyListener) CompiledPolicies(ctx context.Context) ([]engine.Compile
 
 func (l *PolicyListener) Start(ctx context.Context) error {
 	b := backoff.NewExponentialBackOff()
-	b.InitialInterval = time.Duration(l.controlPlaneReconnectWait) * time.Second
-	b.MaxInterval = time.Duration(l.controlPlaneReconnectWait) * time.Second
+	b.InitialInterval = l.controlPlaneReconnectWait
+	b.MaxInterval = l.controlPlaneReconnectWait
 	if err := backoff.Retry(l.dial, b); err != nil {
 		return err
 	}
@@ -177,7 +177,7 @@ func (l *PolicyListener) sendHealthChecks(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Second * time.Duration(l.healthCheckInterval)):
+		case <-time.After(l.healthCheckInterval):
 			l.client.HealthCheck(ctx, &protov1alpha1.HealthCheckRequest{
 				ClientAddress: l.clientAddr,
 				Time:          timestamppb.Now()})

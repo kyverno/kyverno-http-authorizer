@@ -28,9 +28,9 @@ func Command() *cobra.Command {
 	var probesAddress string
 	var httpAuthAddress string
 	var controlPlaneAddr string
-	var controlPlaneReconnectWait int
-	var controlPlaneMaxDialInterval int
-	var healthCheckInterval int
+	var controlPlaneReconnectWait time.Duration
+	var controlPlaneMaxDialInterval time.Duration
+	var healthCheckInterval time.Duration
 	// var clientAddr string
 	command := &cobra.Command{
 		Use:   "authz-server",
@@ -140,9 +140,9 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().IntVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3, "Duration in seconds to wait before retrying connecting to the control plane")
-	command.Flags().IntVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8, "Duration in seconds to wait before stopping attempts of sending a policy to a client")
-	command.Flags().IntVar(&healthCheckInterval, "health-check-interval", 30, "Interval for sending health checks")
+	command.Flags().DurationVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3*time.Second, "Duration to wait before retrying connecting to the control plane")
+	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
+	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")

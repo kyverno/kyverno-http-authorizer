@@ -26,10 +26,10 @@ type PolicySender struct {
 
 	ctx                       context.Context
 	logger                    *logrus.Logger
-	initialSendPolicyWait     int
-	maxSendPolicyInterval     int
-	clientFlushInterval       int // how often we remove unhealthy clients from the map
-	maxClientInactiveDuration int // how long should we wait before deciding this client is unhealthy
+	initialSendPolicyWait     time.Duration
+	maxSendPolicyInterval     time.Duration
+	clientFlushInterval       time.Duration // how often we remove unhealthy clients from the map
+	maxClientInactiveDuration time.Duration // how long should we wait before deciding this client is unhealthy
 	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
 }
 
@@ -37,7 +37,7 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger,
 	initialSendPolicyWait,
 	maxSendPolicyInterval,
 	clientFlushInterval,
-	maxClientInactiveDuration int) *PolicySender {
+	maxClientInactiveDuration time.Duration) *PolicySender {
 	return &PolicySender{
 		polMu:                     &sync.Mutex{},
 		cxnMu:                     &sync.Mutex{},
@@ -58,7 +58,7 @@ func (s *PolicySender) StartHealthCheckMonitor(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Second * time.Duration(s.clientFlushInterval)):
+		case <-time.After(s.clientFlushInterval):
 			s.deleteInactive()
 		}
 	}
@@ -176,8 +176,8 @@ func (s *PolicySender) sendWithBackoff(stream grpc.BidiStreamingServer[protov1al
 		return nil
 	}
 	b := backoff.NewExponentialBackOff()
-	b.InitialInterval = time.Duration(s.initialSendPolicyWait) * time.Second
-	b.MaxInterval = time.Duration(s.maxSendPolicyInterval) * time.Second
+	b.InitialInterval = s.initialSendPolicyWait
+	b.MaxInterval = s.maxSendPolicyInterval
 	return backoff.Retry(operation, b)
 }
 
@@ -195,7 +195,7 @@ func (s *PolicySender) deleteInactive() {
 func (s *PolicySender) getInactiveClients() []string {
 	clientsToDelete := []string{}
 	for c, t := range s.healthCheckMap {
-		if elapsed := time.Since(t); elapsed > time.Second*time.Duration(s.maxClientInactiveDuration) {
+		if elapsed := time.Since(t); elapsed > s.maxClientInactiveDuration {
 			clientsToDelete = append(clientsToDelete, c)
 		}
 	}
