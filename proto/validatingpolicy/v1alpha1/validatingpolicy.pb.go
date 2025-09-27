@@ -23,172 +23,19 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// FailurePolicyType defines failure handling behavior
-type FailurePolicyType int32
-
-const (
-	FailurePolicyType_FAILURE_POLICY_TYPE_UNSPECIFIED FailurePolicyType = 0
-	FailurePolicyType_FAILURE_POLICY_TYPE_IGNORE      FailurePolicyType = 1
-	FailurePolicyType_FAILURE_POLICY_TYPE_FAIL        FailurePolicyType = 2
-)
-
-// Enum value maps for FailurePolicyType.
-var (
-	FailurePolicyType_name = map[int32]string{
-		0: "FAILURE_POLICY_TYPE_UNSPECIFIED",
-		1: "FAILURE_POLICY_TYPE_IGNORE",
-		2: "FAILURE_POLICY_TYPE_FAIL",
-	}
-	FailurePolicyType_value = map[string]int32{
-		"FAILURE_POLICY_TYPE_UNSPECIFIED": 0,
-		"FAILURE_POLICY_TYPE_IGNORE":      1,
-		"FAILURE_POLICY_TYPE_FAIL":        2,
-	}
-)
-
-func (x FailurePolicyType) Enum() *FailurePolicyType {
-	p := new(FailurePolicyType)
-	*p = x
-	return p
-}
-
-func (x FailurePolicyType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (FailurePolicyType) Descriptor() protoreflect.EnumDescriptor {
-	return file_validatingpolicy_proto_enumTypes[0].Descriptor()
-}
-
-func (FailurePolicyType) Type() protoreflect.EnumType {
-	return &file_validatingpolicy_proto_enumTypes[0]
-}
-
-func (x FailurePolicyType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use FailurePolicyType.Descriptor instead.
-func (FailurePolicyType) EnumDescriptor() ([]byte, []int) {
-	return file_validatingpolicy_proto_rawDescGZIP(), []int{0}
-}
-
-// ValidationAction defines actions for policy violations
-type ValidationAction int32
-
-const (
-	ValidationAction_VALIDATION_ACTION_UNSPECIFIED ValidationAction = 0
-	ValidationAction_VALIDATION_ACTION_DENY        ValidationAction = 1
-	ValidationAction_VALIDATION_ACTION_AUDIT       ValidationAction = 2
-	ValidationAction_VALIDATION_ACTION_WARN        ValidationAction = 3
-)
-
-// Enum value maps for ValidationAction.
-var (
-	ValidationAction_name = map[int32]string{
-		0: "VALIDATION_ACTION_UNSPECIFIED",
-		1: "VALIDATION_ACTION_DENY",
-		2: "VALIDATION_ACTION_AUDIT",
-		3: "VALIDATION_ACTION_WARN",
-	}
-	ValidationAction_value = map[string]int32{
-		"VALIDATION_ACTION_UNSPECIFIED": 0,
-		"VALIDATION_ACTION_DENY":        1,
-		"VALIDATION_ACTION_AUDIT":       2,
-		"VALIDATION_ACTION_WARN":        3,
-	}
-)
-
-func (x ValidationAction) Enum() *ValidationAction {
-	p := new(ValidationAction)
-	*p = x
-	return p
-}
-
-func (x ValidationAction) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ValidationAction) Descriptor() protoreflect.EnumDescriptor {
-	return file_validatingpolicy_proto_enumTypes[1].Descriptor()
-}
-
-func (ValidationAction) Type() protoreflect.EnumType {
-	return &file_validatingpolicy_proto_enumTypes[1]
-}
-
-func (x ValidationAction) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ValidationAction.Descriptor instead.
-func (ValidationAction) EnumDescriptor() ([]byte, []int) {
-	return file_validatingpolicy_proto_rawDescGZIP(), []int{1}
-}
-
-// MatchPolicyType defines resource matching behavior
-type MatchPolicyType int32
-
-const (
-	MatchPolicyType_MATCH_POLICY_TYPE_UNSPECIFIED MatchPolicyType = 0
-	MatchPolicyType_MATCH_POLICY_TYPE_EXACT       MatchPolicyType = 1
-	MatchPolicyType_MATCH_POLICY_TYPE_EQUIVALENT  MatchPolicyType = 2
-)
-
-// Enum value maps for MatchPolicyType.
-var (
-	MatchPolicyType_name = map[int32]string{
-		0: "MATCH_POLICY_TYPE_UNSPECIFIED",
-		1: "MATCH_POLICY_TYPE_EXACT",
-		2: "MATCH_POLICY_TYPE_EQUIVALENT",
-	}
-	MatchPolicyType_value = map[string]int32{
-		"MATCH_POLICY_TYPE_UNSPECIFIED": 0,
-		"MATCH_POLICY_TYPE_EXACT":       1,
-		"MATCH_POLICY_TYPE_EQUIVALENT":  2,
-	}
-)
-
-func (x MatchPolicyType) Enum() *MatchPolicyType {
-	p := new(MatchPolicyType)
-	*p = x
-	return p
-}
-
-func (x MatchPolicyType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (MatchPolicyType) Descriptor() protoreflect.EnumDescriptor {
-	return file_validatingpolicy_proto_enumTypes[2].Descriptor()
-}
-
-func (MatchPolicyType) Type() protoreflect.EnumType {
-	return &file_validatingpolicy_proto_enumTypes[2]
-}
-
-func (x MatchPolicyType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use MatchPolicyType.Descriptor instead.
-func (MatchPolicyType) EnumDescriptor() ([]byte, []int) {
-	return file_validatingpolicy_proto_rawDescGZIP(), []int{2}
-}
-
 // ValidatingPolicySpec defines the desired behavior of the ValidatingPolicy.
 type ValidatingPolicySpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// CEL expressions for validation. At least one validation or audit annotation is required.
 	Validations []*Validation `protobuf:"bytes,2,rep,name=validations,proto3" json:"validations,omitempty"`
 	// How to handle policy failures. Defaults to Fail.
-	FailurePolicy *FailurePolicyType `protobuf:"varint,3,opt,name=failure_policy,json=failurePolicy,proto3,enum=kyverno.http.v1alpha1.FailurePolicyType,oneof" json:"failure_policy,omitempty"`
+	FailurePolicy *string `protobuf:"bytes,3,opt,name=failure_policy,json=failurePolicy,proto3,oneof" json:"failure_policy,omitempty"`
 	// Conditions that must be met for validation. Maximum 64 conditions.
 	MatchConditions []*MatchCondition `protobuf:"bytes,5,rep,name=match_conditions,json=matchConditions,proto3" json:"match_conditions,omitempty"`
 	// Variable definitions available in policy expressions (except MatchConditions).
 	Variables []*Variable `protobuf:"bytes,6,rep,name=variables,proto3" json:"variables,omitempty"`
 	// Actions to take when validation fails. Required.
-	ValidationActions []ValidationAction `protobuf:"varint,8,rep,packed,name=validation_actions,json=validationActions,proto3,enum=kyverno.http.v1alpha1.ValidationAction" json:"validation_actions,omitempty"`
+	ValidationActions string `protobuf:"bytes,8,opt,name=validation_actions,json=validationActions,proto3" json:"validation_actions,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -230,11 +77,11 @@ func (x *ValidatingPolicySpec) GetValidations() []*Validation {
 	return nil
 }
 
-func (x *ValidatingPolicySpec) GetFailurePolicy() FailurePolicyType {
+func (x *ValidatingPolicySpec) GetFailurePolicy() string {
 	if x != nil && x.FailurePolicy != nil {
 		return *x.FailurePolicy
 	}
-	return FailurePolicyType_FAILURE_POLICY_TYPE_UNSPECIFIED
+	return ""
 }
 
 func (x *ValidatingPolicySpec) GetMatchConditions() []*MatchCondition {
@@ -251,11 +98,11 @@ func (x *ValidatingPolicySpec) GetVariables() []*Variable {
 	return nil
 }
 
-func (x *ValidatingPolicySpec) GetValidationActions() []ValidationAction {
+func (x *ValidatingPolicySpec) GetValidationActions() string {
 	if x != nil {
 		return x.ValidationActions
 	}
-	return nil
+	return ""
 }
 
 // Validation represents a validation rule
@@ -638,13 +485,13 @@ var File_validatingpolicy_proto protoreflect.FileDescriptor
 
 const file_validatingpolicy_proto_rawDesc = "" +
 	"\n" +
-	"\x16validatingpolicy.proto\x12\x15kyverno.http.v1alpha1\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xad\x03\n" +
+	"\x16validatingpolicy.proto\x12\x15kyverno.http.v1alpha1\x1a\x1egoogle/protobuf/wrappers.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xda\x02\n" +
 	"\x14ValidatingPolicySpec\x12C\n" +
-	"\vvalidations\x18\x02 \x03(\v2!.kyverno.http.v1alpha1.ValidationR\vvalidations\x12T\n" +
-	"\x0efailure_policy\x18\x03 \x01(\x0e2(.kyverno.http.v1alpha1.FailurePolicyTypeH\x00R\rfailurePolicy\x88\x01\x01\x12P\n" +
+	"\vvalidations\x18\x02 \x03(\v2!.kyverno.http.v1alpha1.ValidationR\vvalidations\x12*\n" +
+	"\x0efailure_policy\x18\x03 \x01(\tH\x00R\rfailurePolicy\x88\x01\x01\x12P\n" +
 	"\x10match_conditions\x18\x05 \x03(\v2%.kyverno.http.v1alpha1.MatchConditionR\x0fmatchConditions\x12=\n" +
-	"\tvariables\x18\x06 \x03(\v2\x1f.kyverno.http.v1alpha1.VariableR\tvariables\x12V\n" +
-	"\x12validation_actions\x18\b \x03(\x0e2'.kyverno.http.v1alpha1.ValidationActionR\x11validationActionsB\x11\n" +
+	"\tvariables\x18\x06 \x03(\v2\x1f.kyverno.http.v1alpha1.VariableR\tvariables\x12-\n" +
+	"\x12validation_actions\x18\b \x01(\tR\x11validationActionsB\x11\n" +
 	"\x0f_failure_policy\"\xca\x01\n" +
 	"\n" +
 	"Validation\x12\x1e\n" +
@@ -677,20 +524,7 @@ const file_validatingpolicy_proto_rawDesc = "" +
 	"\x12HealthCheckRequest\x12%\n" +
 	"\x0eclient_address\x18\x01 \x01(\tR\rclientAddress\x12.\n" +
 	"\x04time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x04time\"\x15\n" +
-	"\x13HealthCheckResponse*v\n" +
-	"\x11FailurePolicyType\x12#\n" +
-	"\x1fFAILURE_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1e\n" +
-	"\x1aFAILURE_POLICY_TYPE_IGNORE\x10\x01\x12\x1c\n" +
-	"\x18FAILURE_POLICY_TYPE_FAIL\x10\x02*\x8a\x01\n" +
-	"\x10ValidationAction\x12!\n" +
-	"\x1dVALIDATION_ACTION_UNSPECIFIED\x10\x00\x12\x1a\n" +
-	"\x16VALIDATION_ACTION_DENY\x10\x01\x12\x1b\n" +
-	"\x17VALIDATION_ACTION_AUDIT\x10\x02\x12\x1a\n" +
-	"\x16VALIDATION_ACTION_WARN\x10\x03*s\n" +
-	"\x0fMatchPolicyType\x12!\n" +
-	"\x1dMATCH_POLICY_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
-	"\x17MATCH_POLICY_TYPE_EXACT\x10\x01\x12 \n" +
-	"\x1cMATCH_POLICY_TYPE_EQUIVALENT\x10\x022\xfe\x01\n" +
+	"\x13HealthCheckResponse2\xfe\x01\n" +
 	"\x17ValidatingPolicyService\x12}\n" +
 	"\x18ValidatingPoliciesStream\x124.kyverno.http.v1alpha1.ValidatingPolicyStreamRequest\x1a'.kyverno.http.v1alpha1.ValidatingPolicy(\x010\x01\x12d\n" +
 	"\vHealthCheck\x12).kyverno.http.v1alpha1.HealthCheckRequest\x1a*.kyverno.http.v1alpha1.HealthCheckResponseB@Z>github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1b\x06proto3"
@@ -707,39 +541,33 @@ func file_validatingpolicy_proto_rawDescGZIP() []byte {
 	return file_validatingpolicy_proto_rawDescData
 }
 
-var file_validatingpolicy_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_validatingpolicy_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_validatingpolicy_proto_goTypes = []any{
-	(FailurePolicyType)(0),                // 0: kyverno.http.v1alpha1.FailurePolicyType
-	(ValidationAction)(0),                 // 1: kyverno.http.v1alpha1.ValidationAction
-	(MatchPolicyType)(0),                  // 2: kyverno.http.v1alpha1.MatchPolicyType
-	(*ValidatingPolicySpec)(nil),          // 3: kyverno.http.v1alpha1.ValidatingPolicySpec
-	(*Validation)(nil),                    // 4: kyverno.http.v1alpha1.Validation
-	(*MatchCondition)(nil),                // 5: kyverno.http.v1alpha1.MatchCondition
-	(*Variable)(nil),                      // 6: kyverno.http.v1alpha1.Variable
-	(*ValidatingPolicy)(nil),              // 7: kyverno.http.v1alpha1.ValidatingPolicy
-	(*ValidatingPolicyStreamRequest)(nil), // 8: kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
-	(*HealthCheckRequest)(nil),            // 9: kyverno.http.v1alpha1.HealthCheckRequest
-	(*HealthCheckResponse)(nil),           // 10: kyverno.http.v1alpha1.HealthCheckResponse
-	(*timestamppb.Timestamp)(nil),         // 11: google.protobuf.Timestamp
+	(*ValidatingPolicySpec)(nil),          // 0: kyverno.http.v1alpha1.ValidatingPolicySpec
+	(*Validation)(nil),                    // 1: kyverno.http.v1alpha1.Validation
+	(*MatchCondition)(nil),                // 2: kyverno.http.v1alpha1.MatchCondition
+	(*Variable)(nil),                      // 3: kyverno.http.v1alpha1.Variable
+	(*ValidatingPolicy)(nil),              // 4: kyverno.http.v1alpha1.ValidatingPolicy
+	(*ValidatingPolicyStreamRequest)(nil), // 5: kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
+	(*HealthCheckRequest)(nil),            // 6: kyverno.http.v1alpha1.HealthCheckRequest
+	(*HealthCheckResponse)(nil),           // 7: kyverno.http.v1alpha1.HealthCheckResponse
+	(*timestamppb.Timestamp)(nil),         // 8: google.protobuf.Timestamp
 }
 var file_validatingpolicy_proto_depIdxs = []int32{
-	4,  // 0: kyverno.http.v1alpha1.ValidatingPolicySpec.validations:type_name -> kyverno.http.v1alpha1.Validation
-	0,  // 1: kyverno.http.v1alpha1.ValidatingPolicySpec.failure_policy:type_name -> kyverno.http.v1alpha1.FailurePolicyType
-	5,  // 2: kyverno.http.v1alpha1.ValidatingPolicySpec.match_conditions:type_name -> kyverno.http.v1alpha1.MatchCondition
-	6,  // 3: kyverno.http.v1alpha1.ValidatingPolicySpec.variables:type_name -> kyverno.http.v1alpha1.Variable
-	1,  // 4: kyverno.http.v1alpha1.ValidatingPolicySpec.validation_actions:type_name -> kyverno.http.v1alpha1.ValidationAction
-	3,  // 5: kyverno.http.v1alpha1.ValidatingPolicy.spec:type_name -> kyverno.http.v1alpha1.ValidatingPolicySpec
-	11, // 6: kyverno.http.v1alpha1.HealthCheckRequest.time:type_name -> google.protobuf.Timestamp
-	8,  // 7: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:input_type -> kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
-	9,  // 8: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:input_type -> kyverno.http.v1alpha1.HealthCheckRequest
-	7,  // 9: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicy
-	10, // 10: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:output_type -> kyverno.http.v1alpha1.HealthCheckResponse
-	9,  // [9:11] is the sub-list for method output_type
-	7,  // [7:9] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1, // 0: kyverno.http.v1alpha1.ValidatingPolicySpec.validations:type_name -> kyverno.http.v1alpha1.Validation
+	2, // 1: kyverno.http.v1alpha1.ValidatingPolicySpec.match_conditions:type_name -> kyverno.http.v1alpha1.MatchCondition
+	3, // 2: kyverno.http.v1alpha1.ValidatingPolicySpec.variables:type_name -> kyverno.http.v1alpha1.Variable
+	0, // 3: kyverno.http.v1alpha1.ValidatingPolicy.spec:type_name -> kyverno.http.v1alpha1.ValidatingPolicySpec
+	8, // 4: kyverno.http.v1alpha1.HealthCheckRequest.time:type_name -> google.protobuf.Timestamp
+	5, // 5: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:input_type -> kyverno.http.v1alpha1.ValidatingPolicyStreamRequest
+	6, // 6: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:input_type -> kyverno.http.v1alpha1.HealthCheckRequest
+	4, // 7: kyverno.http.v1alpha1.ValidatingPolicyService.ValidatingPoliciesStream:output_type -> kyverno.http.v1alpha1.ValidatingPolicy
+	7, // 8: kyverno.http.v1alpha1.ValidatingPolicyService.HealthCheck:output_type -> kyverno.http.v1alpha1.HealthCheckResponse
+	7, // [7:9] is the sub-list for method output_type
+	5, // [5:7] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_validatingpolicy_proto_init() }
@@ -754,14 +582,13 @@ func file_validatingpolicy_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_validatingpolicy_proto_rawDesc), len(file_validatingpolicy_proto_rawDesc)),
-			NumEnums:      3,
+			NumEnums:      0,
 			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_validatingpolicy_proto_goTypes,
 		DependencyIndexes: file_validatingpolicy_proto_depIdxs,
-		EnumInfos:         file_validatingpolicy_proto_enumTypes,
 		MessageInfos:      file_validatingpolicy_proto_msgTypes,
 	}.Build()
 	File_validatingpolicy_proto = out.File

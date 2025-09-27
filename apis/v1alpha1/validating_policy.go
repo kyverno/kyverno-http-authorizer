@@ -36,18 +36,7 @@ func ToProto(pol *v1alpha1.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
 			Expression: m.Expression,
 		})
 	}
-	var fp protov1alpha1.FailurePolicyType
-	if pol.Spec.FailurePolicy != nil {
-		switch *pol.Spec.FailurePolicy {
-		case admissionregistrationv1.Ignore:
-			fp = 1
-		case admissionregistrationv1.Fail:
-			fp = 2
-		}
-	} else {
-		fp = 1
-	}
-
+	fp := string(*pol.Spec.FailurePolicy)
 	return &protov1alpha1.ValidatingPolicy{
 		Name: pol.Name,
 		Spec: &protov1alpha1.ValidatingPolicySpec{
@@ -84,13 +73,7 @@ func FromProto(pol *protov1alpha1.ValidatingPolicy) *v1alpha1.ValidatingPolicy {
 			Expression: m.Expression,
 		})
 	}
-	var fp admissionregistrationv1.FailurePolicyType
-	switch int32(*pol.Spec.FailurePolicy) { // ammar: check if this field should be a string
-	case 1:
-		fp = "Ignore"
-	case 2:
-		fp = "Fail"
-	}
+	fp := admissionregistrationv1.FailurePolicyType(*pol.Spec.FailurePolicy)
 	return &v1alpha1.ValidatingPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: pol.Name,
