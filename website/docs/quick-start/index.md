@@ -1,6 +1,6 @@
 # Quick start
 
-The Kyverno Envoy Plugin is a powerful tool that integrates with the Envoy proxy.
+The Kyverno HTTP Authorizer is a powerful tool that integrates with the Envoy proxy.
 
 It allows you to enforce Kyverno policies on incoming and outgoing traffic in a service mesh environment, providing an additional layer of security and control over your applications.
 
@@ -12,9 +12,9 @@ This functionality allows authorization decisions to be offloaded to an external
 
 ![overview](../schemas/overview.png)
 
-## What is the Kyverno Envoy Plugin?
+## What is the Kyverno HTTP Authorizer?
 
-The [Kyverno Envoy Plugin](https://github.com/kyverno/kyverno-envoy-plugin) is gRPC server that implements [Envoy External Authorization API](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html).
+The [Kyverno HTTP Authorizer](https://github.com/kyverno/kyverno-http-authorizer) is gRPC server that implements [Envoy External Authorization API](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html).
 
 This allows you to enforce Kyverno policies on incoming and outgoing traffic in a service mesh environment, providing an additional layer of security and control over your applications. You can use this version of Kyverno to enforce fine-grained, context-aware access control policies with Envoy without modifying your microservice.
 
@@ -28,7 +28,7 @@ Performing policy evaluations locally with Envoy is advantageous, as it eliminat
 
 !!!info
 
-    The Kyverno Envoy Plugin is frequently deployed in Kubernetes environments as a sidecar container or as a separate pod. Additionally, it can be used in other environments as a standalone process running alongside Envoy.
+    The Kyverno HTTP Authorizer is frequently deployed in Kubernetes environments as a sidecar container or as a separate pod. Additionally, it can be used in other environments as a standalone process running alongside Envoy.
 
 ## Additional Resources 
 

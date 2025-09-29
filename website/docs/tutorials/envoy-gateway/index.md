@@ -160,7 +160,7 @@ Now deploy the Kyverno Authz Server.
 helm install kyverno-authz-server \
   --namespace kyverno --create-namespace \
   --wait \
-  --repo https://kyverno.github.io/kyverno-envoy-plugin kyverno-authz-server \
+  --repo https://kyverno.github.io/kyverno-http-authorizer kyverno-authz-server \
   --set certificates.certManager.issuerRef.group=cert-manager.io \
   --set certificates.certManager.issuerRef.kind=ClusterIssuer \
   --set certificates.certManager.issuerRef.name=selfsigned-issuer

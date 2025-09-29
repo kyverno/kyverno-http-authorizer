@@ -1,11 +1,11 @@
 # site
-site_name: Kyverno Envoy Plugin
-site_url: https://kyverno.github.io/kyverno-envoy-plugin/
+site_name: Kyverno HTTP Authorizer
+site_url: https://kyverno.github.io/kyverno-http-authorizer/
 site_description: Kyverno based authz in a mesh
 
 # repo
-repo_name: kyverno/kyverno-envoy-plugin
-repo_url: https://github.com/kyverno/kyverno-envoy-plugin
+repo_name: kyverno/kyverno-http-authorizer
+repo_url: https://github.com/kyverno/kyverno-http-authorizer
 
 # edit
 edit_uri: edit/main/website/docs/
@@ -31,7 +31,7 @@ extra:
     provider: mike
   social:
   - icon: fontawesome/brands/github
-    link: https://github.com/kyverno/kyverno-envoy-plugin
+    link: https://github.com/kyverno/kyverno-http-authorizer
   - icon: fontawesome/brands/slack
     link: https://kubernetes.slack.com/archives/CLGR9BJU9
   - icon: fontawesome/brands/x-twitter
