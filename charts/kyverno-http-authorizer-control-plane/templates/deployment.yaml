@@ -104,8 +104,24 @@ spec:
           ports:
             {{- tpl (toYaml .) $ | nindent 12 }}
           {{- end }}
-          {{- with .args }}
           args:
-            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- with .args }}
+            {{- range . }}
+            - {{ tpl . $ | quote }}
+            {{- end }}
+          {{- end }}
+          {{- with $.Values.controlPlane }}
+            - {{ printf "--probes-address=%s" .probesAddress | quote }}
+            - {{ printf "--grpc-address=%s" .grpcAddress | quote }}
+            - {{ printf "--grpc-network=%s" .grpcNetwork | quote }}
+            - {{ printf "--metrics-address=%s" .metricsAddress | quote }}
+            - {{ printf "--initial-send-wait=%s" .initialSendWait | quote }}
+            - {{ printf "--max-send-interval=%s" .maxSendInterval | quote }}
+            - {{ printf "--client-flush-interval=%s" .clientFlushInterval | quote }}
+            - {{ printf "--max-client-inactive-duration=%s" .maxClientInactiveDuration | quote }}
+            - {{ printf "--kube-policy-source=%t" .kubePolicySource | quote }}
+            {{- range .externalPolicySources }}
+            - {{ printf "--external-policy-source=%s" . | quote }}
+            {{- end }}
           {{- end }}
         {{- end }}

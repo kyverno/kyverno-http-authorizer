@@ -28,7 +28,6 @@ func Command() *cobra.Command {
 	var grpcAddress string
 	var grpcNetwork string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
-	var externalPolicySources []string
 	var kubePolicySource bool
 	var initialSendPolicyWait time.Duration
 	var maxSendPolicyInterval time.Duration
@@ -132,8 +131,6 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
-	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
-	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }
