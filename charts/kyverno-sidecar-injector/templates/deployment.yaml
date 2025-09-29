@@ -110,7 +110,9 @@ spec:
           {{- end }}
           args:
           {{- with .args }}
-            {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- range . }}
+            - {{ tpl . $ | quote }}
+            {{- end }}
           {{- end }}
           {{- range $.Values.externalPolicySources }}
             {{- (printf "--external-policy-source=%s" (tpl (toYaml .) $)) | nindent 12 }}

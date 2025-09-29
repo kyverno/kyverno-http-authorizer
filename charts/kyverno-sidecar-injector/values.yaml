@@ -230,7 +230,7 @@ containers:
       - --cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt
       - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
       - --sidecar-image={{ include "sidecar-injector.image" .Values.containers.injector.image }}
-      - --control-plane-address={{ .Values.control-plane-address }}
+      - --control-plane-address={{ .Values.controlPlaneAddress }}
 
 service:
 
@@ -266,6 +266,9 @@ webhook:
         operator: In
         values:
         - enabled
+
+# -- Control plane address for the sidecar injector
+controlPlaneAddress: ""
 
 # -- External policy sources
 externalPolicySources:
