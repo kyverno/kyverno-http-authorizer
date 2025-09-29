@@ -17,7 +17,7 @@ import (
 )
 
 func NewSidecarInjectorServer(addr, sidecarImage, controlPlaneAddr, certFile, keyFile string,
-	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval time.Duration, externalPolicySources ...string) server.ServerFunc {
+	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval string, externalPolicySources ...string) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()
@@ -31,7 +31,8 @@ func NewSidecarInjectorServer(addr, sidecarImage, controlPlaneAddr, certFile, ke
 			if err := json.Unmarshal(r.Object.Raw, &pod); err != nil {
 				return handlers.AdmissionResponse(r, err)
 			}
-			pod = sidecar.Inject(pod, sidecar.Sidecar(sidecarImage, controlPlaneAddr, externalPolicySources...))
+			pod = sidecar.Inject(pod, sidecar.Sidecar(sidecarImage, controlPlaneAddr,
+				controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval, externalPolicySources...))
 			if data, err := json.Marshal(&pod); err != nil {
 				return handlers.AdmissionResponse(r, err)
 			} else if patch, err := jsonpatch.CreatePatch(r.Object.Raw, data); err != nil {
