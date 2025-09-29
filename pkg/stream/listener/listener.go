@@ -58,7 +58,6 @@ func NewPolicyListener(
 	}
 }
 
-// TODO: check if the interface needs to remain the same
 func (l *PolicyListener) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
 	return l.sortPolicies(), nil
 }
