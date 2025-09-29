@@ -5,13 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hairyhenderson/go-fsimpl"
-	"github.com/hairyhenderson/go-fsimpl/filefs"
-	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/authz"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
-	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
-	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 
@@ -142,20 +136,4 @@ func Command() *cobra.Command {
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
-}
-
-// TODO: bring this back
-func getExternalProviders(vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
-	mux := fsimpl.NewMux()
-	mux.Add(filefs.FS)
-	mux.Add(gitfs.FS)
-	var providers []engine.Provider
-	for _, url := range urls {
-		fsys, err := mux.Lookup(url)
-		if err != nil {
-			return nil, err
-		}
-		providers = append(providers, genericproviders.NewFsProvider(vpolCompiler, fsys))
-	}
-	return providers, nil
 }
