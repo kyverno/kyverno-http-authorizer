@@ -16,7 +16,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func NewSidecarInjectorServer(addr, sidecarImage, controlPlaneAddr, certFile, keyFile string, externalPolicySources ...string) server.ServerFunc {
+func NewSidecarInjectorServer(addr, sidecarImage, controlPlaneAddr, certFile, keyFile string,
+	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval time.Duration, externalPolicySources ...string) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()

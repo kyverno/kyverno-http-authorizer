@@ -2,6 +2,7 @@ package sidecarinjector
 
 import (
 	"context"
+	"time"
 
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/webhook/mutation"
@@ -15,6 +16,7 @@ func Command() *cobra.Command {
 	var sidecarImage string
 	var externalPolicySources []string
 	var controlPlaneAddr string
+	var controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval time.Duration
 	command := &cobra.Command{
 		Use:   "sidecar-injector",
 		Short: "Start the Kubernetes mutating webhook injecting Kyverno HTTP Authorizer sidecars into pod containers",
@@ -22,7 +24,9 @@ func Command() *cobra.Command {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// create server
-				http := mutation.NewSidecarInjectorServer(address, sidecarImage, controlPlaneAddr, certFile, keyFile, externalPolicySources...)
+				http := mutation.NewSidecarInjectorServer(address, sidecarImage, controlPlaneAddr, certFile, keyFile,
+					controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval,
+					externalPolicySources...)
 				// run server
 				return http.Run(ctx)
 			})
@@ -34,6 +38,9 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&sidecarImage, "sidecar-image", "", "Image to use in sidecar")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "The control plane address to inject into the sidecars")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
+	command.Flags().DurationVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3*time.Second, "Duration to wait before retrying connecting to the control plane")
+	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
+	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
 
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
