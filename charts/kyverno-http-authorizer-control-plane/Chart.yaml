@@ -1,5 +1,5 @@
 apiVersion: v2
-name: kyverno-authz-server
+name: kyverno-http-authorizer-control-plane
 description: Kyverno policies based HTTP authorization server ❤️
 icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
 home: https://kyverno.github.io/kyverno-http-authorizer
