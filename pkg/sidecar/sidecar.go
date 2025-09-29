@@ -26,8 +26,8 @@ func Sidecar(image string, controlPlaneAddr string,
 			"--probes-address=:9080",
 			"--control-plane-address=" + controlPlaneAddr,
 			"--control-plane-reconnect-wait=" + controlPlaneReconnectWait,
-			"--control-plane-max-dial-interval" + controlPlaneMaxDialInterval,
-			"--health-check-interval" + healthCheckInterval,
+			"--control-plane-max-dial-interval=" + controlPlaneMaxDialInterval,
+			"--health-check-interval=" + healthCheckInterval,
 		},
 		Env: []corev1.EnvVar{
 			{

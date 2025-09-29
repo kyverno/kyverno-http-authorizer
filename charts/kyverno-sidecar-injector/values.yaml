@@ -231,6 +231,9 @@ containers:
       - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
       - --sidecar-image={{ include "sidecar-injector.image" .Values.containers.injector.image }}
       - --control-plane-address={{ .Values.controlPlaneAddress }}
+      - --control-plane-reconnect-wait={{ .Values.sidecar.controlPlaneReconnectWait }}
+      - --control-plane-max-dial-interval={{ .Values.sidecar.controlPlaneMaxDialInterval }}
+      - --health-check-interval={{ .Values.sidecar.healthCheckInterval }}
 
 service:
 
@@ -269,6 +272,18 @@ webhook:
 
 # -- Control plane address for the sidecar injector
 controlPlaneAddress: ""
+
+# -- Sidecar configuration
+sidecar:
+  
+  # -- Duration to wait before retrying connecting to the control plane
+  controlPlaneReconnectWait: "3s"
+  
+  # -- Duration to wait before stopping attempts of connecting to the control plane
+  controlPlaneMaxDialInterval: "8s"
+  
+  # -- Interval for sending health checks
+  healthCheckInterval: "30s"
 
 # -- External policy sources
 externalPolicySources:

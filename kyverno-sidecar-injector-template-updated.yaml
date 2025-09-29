@@ -152,6 +152,9 @@ spec:
             - "--key-file=/opt/kubernetes-sidecar-injector/certs/tls.key"
             - "--sidecar-image=ghcr.io/kyverno/kyverno-http-authorizer:latest"
             - "--control-plane-address="
+            - "--control-plane-reconnect-wait=3s"
+            - "--control-plane-max-dial-interval=8s"
+            - "--health-check-interval=30s"
           volumeMounts:
             - name: certs
               mountPath: /opt/kubernetes-sidecar-injector/certs
