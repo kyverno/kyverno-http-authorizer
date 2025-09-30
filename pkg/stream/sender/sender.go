@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	policyapi "github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream"
+
 	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 	"google.golang.org/grpc"
@@ -32,20 +34,21 @@ type PolicySender struct {
 	clientFlushInterval       time.Duration // how often we remove unhealthy clients from the map
 	maxClientInactiveDuration time.Duration // how long should we wait before deciding this client is unhealthy
 	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
-
-	provider engine.Provider
 }
 
 func NewPolicySender(ctx context.Context, logger *logrus.Logger,
-	provider engine.Provider,
+	externalPolicies []*v1alpha1.ValidatingPolicy,
 	initialSendPolicyWait,
 	maxSendPolicyInterval,
 	clientFlushInterval,
 	maxClientInactiveDuration time.Duration) *PolicySender {
+	policyMap := make(map[string]*protov1alpha1.ValidatingPolicy)
+	for _, p := range externalPolicies {
+		policyMap[p.Name] = policyapi.ToProto(p)
+	}
 	return &PolicySender{
 		polMu:                     &sync.Mutex{},
 		cxnMu:                     &sync.Mutex{},
-		provider:                  provider,
 		logger:                    logger,
 		ctx:                       ctx,
 		policies:                  make(map[string]*protov1alpha1.ValidatingPolicy),

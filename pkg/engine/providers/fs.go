@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/kyverno/kyverno-http-authorizer/pkg/data"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
@@ -35,22 +34,22 @@ func defaultLoader(_fs func() (fs.FS, error)) (loader.Loader, error) {
 
 var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defaultLoader(nil) })
 
-type fsProvider struct {
+type FsProvider struct {
 	vpolCompiler vpolcompiler.Compiler
 	logger       *logrus.Logger
 	fs           fs.FS
 }
 
-func NewFsProvider(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
-	return &fsProvider{
+func NewFsProvider(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, fs fs.FS) *FsProvider {
+	return &FsProvider{
 		vpolCompiler: vpolCompiler,
 		fs:           fs,
 		logger:       logger,
 	}
 }
 
-func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
-	var policies []engine.CompiledPolicy
+func (p *FsProvider) Policies(ctx context.Context) ([]*v1alpha1.ValidatingPolicy, error) {
+	var policies []*v1alpha1.ValidatingPolicy
 	entries, err := fs.ReadDir(p.fs, ".")
 	if err != nil {
 		return nil, err
@@ -87,11 +86,8 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 			if err != nil {
 				return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
 			}
-			compiled, errs := p.vpolCompiler.Compile(typed)
-			if len(errs) > 0 {
-				return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
-			}
-			policies = append(policies, compiled)
+
+			policies = append(policies, typed)
 		}
 	}
 	return policies, nil

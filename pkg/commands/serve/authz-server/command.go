@@ -7,13 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/hairyhenderson/go-fsimpl"
-	"github.com/hairyhenderson/go-fsimpl/filefs"
-	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/ctxprovider"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
-	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/httpauth"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
@@ -74,24 +68,15 @@ func Command() *cobra.Command {
 					}
 
 					vpolCompiler := vpolcompiler.NewCompiler()
-
-					allProviders, err := getExternalProviders(vpolCompiler)
-					if err != nil {
-						return err
-					}
-
 					provider := listener.NewPolicyListener(controlPlaneAddr,
 						clientAddr, vpolCompiler,
 						logger, controlPlaneReconnectWait,
 						controlPlaneMaxDialInterval,
 						healthCheckInterval)
 
-					allProviders = append(allProviders, provider)
-					composite := providers.NewComposite(allProviders...)
-
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
-					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), composite, logger)
+					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), provider, logger)
 					httpAuth := httpauth.NewServer(httpAuthAddress, provider, a)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
@@ -165,19 +150,4 @@ func Command() *cobra.Command {
 
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
-}
-
-func getExternalProviders(vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
-	mux := fsimpl.NewMux()
-	mux.Add(filefs.FS)
-	mux.Add(gitfs.FS)
-	var providers []engine.Provider
-	for _, url := range urls {
-		fsys, err := mux.Lookup(url)
-		if err != nil {
-			return nil, err
-		}
-		providers = append(providers, genericproviders.NewFsProvider(vpolCompiler, fsys))
-	}
-	return providers, nil
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/authz"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
@@ -67,8 +67,24 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
+					vpolCompiler := vpolcompiler.NewCompiler()
 					logger := logrus.New()
-					s := sender.NewPolicySender(ctx, logger,
+
+					extern, err := getExternalProviders(logger, vpolCompiler, externalSources...)
+					if err != nil {
+						return err
+					}
+					policies := []*v1alpha1.ValidatingPolicy{}
+					for _, e := range extern {
+						providerPolicies, err := e.Policies(ctx)
+						if err != nil {
+							logger.Error()
+							continue
+						}
+						policies = append(policies, providerPolicies...)
+					}
+
+					s := sender.NewPolicySender(ctx, logger, policies,
 						initialSendPolicyWait,
 						maxSendPolicyInterval,
 						clientFlushInterval,
@@ -138,15 +154,16 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
+	command.Flags().StringArrayVar(&externalSources, "external-policy-source", nil, "External policy sources")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }
 
-func getExternalProviders(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+func getExternalProviders(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]*providers.FsProvider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	mux.Add(gitfs.FS)
-	var providers []engine.Provider
+	var providers []*providers.FsProvider
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {
