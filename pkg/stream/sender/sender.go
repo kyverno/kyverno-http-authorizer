@@ -26,8 +26,8 @@ type PolicySender struct {
 
 	ctx                       context.Context
 	logger                    *logrus.Logger
-	initialSendPolicyWait     time.Duration
-	maxSendPolicyInterval     time.Duration
+	initialSendPolicyWait     time.Duration // how long to wait before the second attempt of a failed policy send
+	maxSendPolicyInterval     time.Duration // the maximum duration to wait before stopping attempts of a policy send
 	clientFlushInterval       time.Duration // how often we remove unhealthy clients from the map
 	maxClientInactiveDuration time.Duration // how long should we wait before deciding this client is unhealthy
 	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
