@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hairyhenderson/go-fsimpl"
+	"github.com/hairyhenderson/go-fsimpl/filefs"
+	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/authz"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
+	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 
@@ -33,6 +39,7 @@ func Command() *cobra.Command {
 	var maxSendPolicyInterval time.Duration
 	var maxClientInactiveDuration time.Duration
 	var clientFlushInterval time.Duration
+	var externalSources []string
 	command := &cobra.Command{
 		Use:   "control-plane",
 		Short: "Start the Kyverno HTTP authorizer control plane",
@@ -133,4 +140,19 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
+}
+
+func getExternalProviders(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+	mux := fsimpl.NewMux()
+	mux.Add(filefs.FS)
+	mux.Add(gitfs.FS)
+	var providers []engine.Provider
+	for _, url := range urls {
+		fsys, err := mux.Lookup(url)
+		if err != nil {
+			return nil, err
+		}
+		providers = append(providers, genericproviders.NewFsProvider(logger, vpolCompiler, fsys))
+	}
+	return providers, nil
 }

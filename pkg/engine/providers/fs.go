@@ -14,6 +14,7 @@ import (
 	"github.com/kyverno/pkg/ext/resource/convert"
 	"github.com/kyverno/pkg/ext/resource/loader"
 	"github.com/kyverno/pkg/ext/yaml"
+	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/kubectl-validate/pkg/openapiclient"
 )
 
@@ -36,13 +37,15 @@ var DefaultLoader = sync.OnceValues(func() (loader.Loader, error) { return defau
 
 type fsProvider struct {
 	vpolCompiler vpolcompiler.Compiler
+	logger       *logrus.Logger
 	fs           fs.FS
 }
 
-func NewFsProvider(vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
+func NewFsProvider(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, fs fs.FS) engine.Provider {
 	return &fsProvider{
 		vpolCompiler: vpolCompiler,
 		fs:           fs,
+		logger:       logger,
 	}
 }
 
@@ -73,20 +76,22 @@ func (p *fsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPol
 		for _, document := range documents {
 			gvk, untyped, err := ldr.Load(document)
 			if err != nil {
+				p.logger.Error("error loading document from external provider", err)
 				continue
 			}
-			switch gvk {
-			case vpol:
-				typed, err := convert.To[v1alpha1.ValidatingPolicy](untyped)
-				if err != nil {
-					return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
-				}
-				compiled, errs := p.vpolCompiler.Compile(typed)
-				if len(errs) > 0 {
-					return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
-				}
-				policies = append(policies, compiled)
+			if gvk != vpol {
+				p.logger.Error("skipping the loaded document because it wasn't a validating policy, got: ", gvk.String())
+				continue
 			}
+			typed, err := convert.To[v1alpha1.ValidatingPolicy](untyped)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert to ValidatingPolicy: %w", err)
+			}
+			compiled, errs := p.vpolCompiler.Compile(typed)
+			if len(errs) > 0 {
+				return nil, fmt.Errorf("failed to compile ValidatingPolicy: %w", err)
+			}
+			policies = append(policies, compiled)
 		}
 	}
 	return policies, nil

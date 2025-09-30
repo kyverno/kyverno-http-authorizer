@@ -37,6 +37,7 @@ type PolicySender struct {
 }
 
 func NewPolicySender(ctx context.Context, logger *logrus.Logger,
+	provider engine.Provider,
 	initialSendPolicyWait,
 	maxSendPolicyInterval,
 	clientFlushInterval,
@@ -44,6 +45,7 @@ func NewPolicySender(ctx context.Context, logger *logrus.Logger,
 	return &PolicySender{
 		polMu:                     &sync.Mutex{},
 		cxnMu:                     &sync.Mutex{},
+		provider:                  provider,
 		logger:                    logger,
 		ctx:                       ctx,
 		policies:                  make(map[string]*protov1alpha1.ValidatingPolicy),
