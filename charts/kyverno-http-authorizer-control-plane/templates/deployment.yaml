@@ -119,5 +119,9 @@ spec:
             - {{ printf "--max-send-interval=%s" .maxSendInterval | quote }}
             - {{ printf "--client-flush-interval=%s" .clientFlushInterval | quote }}
             - {{ printf "--max-client-inactive-duration=%s" .maxClientInactiveDuration | quote }}
+            - {{ printf "--kube-policy-source=%t" .kubePolicySource | quote }}
+            {{- range .externalPolicySources }}
+            - {{ printf "--external-policy-source=%s" . | quote }}
+            {{- end }}
           {{- end }}
         {{- end }}

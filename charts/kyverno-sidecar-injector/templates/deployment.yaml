@@ -114,9 +114,6 @@ spec:
             - {{ tpl . $ | quote }}
             {{- end }}
           {{- end }}
-          {{- range $.Values.externalPolicySources }}
-            {{- (printf "--external-policy-source=%s" (tpl (toYaml .) $)) | nindent 12 }}
-          {{- end }}
           volumeMounts:
             - name: certs
               mountPath: /opt/kubernetes-sidecar-injector/certs

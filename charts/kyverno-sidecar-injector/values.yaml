@@ -284,8 +284,3 @@ sidecar:
   
   # -- Interval for sending health checks
   healthCheckInterval: "30s"
-
-# -- External policy sources
-externalPolicySources:
-# - ...
-# - ...
