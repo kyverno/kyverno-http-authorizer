@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/stream"
 	protov1alpha1 "github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,8 @@ type PolicySender struct {
 	clientFlushInterval       time.Duration // how often we remove unhealthy clients from the map
 	maxClientInactiveDuration time.Duration // how long should we wait before deciding this client is unhealthy
 	sortPolicies              func() []*protov1alpha1.ValidatingPolicy
+
+	provider engine.Provider
 }
 
 func NewPolicySender(ctx context.Context, logger *logrus.Logger,
