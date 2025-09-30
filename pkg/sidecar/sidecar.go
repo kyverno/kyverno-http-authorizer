@@ -5,8 +5,7 @@ import (
 )
 
 func Sidecar(image string, controlPlaneAddr string,
-	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval string,
-	externalPolicySources ...string) corev1.Container {
+	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval string) corev1.Container {
 	container := corev1.Container{
 		Name:            "kyverno-authz-server",
 		ImagePullPolicy: corev1.PullIfNotPresent,
@@ -39,9 +38,6 @@ func Sidecar(image string, controlPlaneAddr string,
 				},
 			},
 		},
-	}
-	for _, source := range externalPolicySources {
-		container.Args = append(container.Args, "--external-policy-source="+source)
 	}
 	return container
 }

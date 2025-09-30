@@ -9,14 +9,13 @@ import (
 
 func TestSidecar(t *testing.T) {
 	tests := []struct {
-		name                         string
-		image                        string
-		controlPlaneAddr             string
-		controlPlaneReconnectWait    string
-		controlPlaneMaxDialInterval  string
-		healthCheckInterval          string
-		externalPolicySources        []string
-		want                         corev1.Container
+		name                        string
+		image                       string
+		controlPlaneAddr            string
+		controlPlaneReconnectWait   string
+		controlPlaneMaxDialInterval string
+		healthCheckInterval         string
+		want                        corev1.Container
 	}{{
 		name:                        "basic sidecar",
 		image:                       "foo:bar",
@@ -24,7 +23,6 @@ func TestSidecar(t *testing.T) {
 		controlPlaneReconnectWait:   "3s",
 		controlPlaneMaxDialInterval: "8s",
 		healthCheckInterval:         "30s",
-		externalPolicySources:       []string{},
 		want: corev1.Container{
 			Name:            "kyverno-authz-server",
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -46,49 +44,6 @@ func TestSidecar(t *testing.T) {
 				"--control-plane-reconnect-wait=3s",
 				"--control-plane-max-dial-interval=8s",
 				"--health-check-interval=30s",
-			},
-			Env: []corev1.EnvVar{
-				{
-					Name: "POD_IP",
-					ValueFrom: &corev1.EnvVarSource{
-						FieldRef: &corev1.ObjectFieldSelector{
-							FieldPath: "status.podIP",
-						},
-					},
-				},
-			},
-		},
-	}, {
-		name:                        "sidecar with external policy sources",
-		image:                       "foo:bar",
-		controlPlaneAddr:            "http://control-plane:9081",
-		controlPlaneReconnectWait:   "3s",
-		controlPlaneMaxDialInterval: "8s",
-		healthCheckInterval:         "30s",
-		externalPolicySources:       []string{"http://example.com/policies", "file:///path/to/policies"},
-		want: corev1.Container{
-			Name:            "kyverno-authz-server",
-			ImagePullPolicy: corev1.PullIfNotPresent,
-			Image:           "foo:bar",
-			Ports: []corev1.ContainerPort{{
-				Name:          "http",
-				Protocol:      corev1.ProtocolTCP,
-				ContainerPort: 9080,
-			}, {
-				Name:          "grpc",
-				Protocol:      corev1.ProtocolTCP,
-				ContainerPort: 9081,
-			}},
-			Args: []string{
-				"serve",
-				"authz-server",
-				"--probes-address=:9080",
-				"--control-plane-address=http://control-plane:9081",
-				"--control-plane-reconnect-wait=3s",
-				"--control-plane-max-dial-interval=8s",
-				"--health-check-interval=30s",
-				"--external-policy-source=http://example.com/policies",
-				"--external-policy-source=file:///path/to/policies",
 			},
 			Env: []corev1.EnvVar{
 				{
@@ -104,7 +59,7 @@ func TestSidecar(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Sidecar(tt.image, tt.controlPlaneAddr, tt.controlPlaneReconnectWait, tt.controlPlaneMaxDialInterval, tt.healthCheckInterval, tt.externalPolicySources...)
+			got := Sidecar(tt.image, tt.controlPlaneAddr, tt.controlPlaneReconnectWait, tt.controlPlaneMaxDialInterval, tt.healthCheckInterval)
 			assert.Equal(t, tt.want, got)
 		})
 	}
