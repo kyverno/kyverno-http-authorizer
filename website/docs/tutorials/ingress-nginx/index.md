@@ -346,6 +346,130 @@ curl -s -w "\nhttp_code=%{http_code}" \
   localhost:8080/api/v1/get
 ```
 
+## Alternative: Using Kubernetes Resources
+
+The previous policy fetched data from an external HTTP service using the `http.Get()` function. You can also fetch data from Kubernetes resources like ConfigMaps using the `resource.Get()` function. These functions are part of the [Kyverno CEL libraries](https://kyverno.io/docs/policy-types/cel-libraries/).
+
+### Create a ConfigMap with the secret word
+
+```bash
+# create configmap with secret word
+kubectl apply -n demo -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secret-word
+data:
+  secret-word: "my-k8s-secret"
+EOF
+```
+
+### Create a policy that reads from ConfigMap
+
+```yaml
+# create policy that reads from configmap
+kubectl apply -f - <<EOF
+apiVersion: envoy.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: acme-api
+spec:
+  evaluation:
+    mode: HTTP
+  matchConditions:
+  - expression: |
+      object.host == "acme.corp"
+    name: host
+  - expression: |
+      object.path.startsWith("/api/v1")
+    name: v1-api
+  variables:
+  - name: secretWord
+    expression: |
+      resource.Get("v1", "configmaps", "demo", "secret-word").data["secret-word"]
+  validations:
+  - expression: |
+      object.headers.get("secret-header") == variables.secretWord && object.method == "GET"
+        ? http.response().status(200).withBody("request is GET and contains secret header")
+        : null
+  - expression: |
+      object.headers.get("content-type") == "application/json" && object.method == "POST"
+        ? http.response().status(200).withBody("request is post and content is application/json")
+        : null
+  - expression: |
+      http.response().status(403).withBody("validations didnt pass")
+EOF
+```
+
+This policy is similar to the previous one, but fetches the secret word from a ConfigMap in the `demo` namespace instead of an external HTTP service.
+
+### Create an Ingress for acme.corp
+
+```yaml
+# create ingress for acme.corp
+kubectl apply -n demo -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: acme
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/validate"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: acme.corp
+    http:
+      paths:
+      - path: /api/v1
+        pathType: Prefix
+        backend:
+          service:
+            name: httpbin
+            port:
+              number: 8000
+EOF
+```
+
+### Test the acme.corp policy
+
+GET request with the correct secret header from ConfigMap will return `200`:
+
+```bash
+curl -s -w "\nhttp_code=%{http_code}" \
+  -H "Host: acme.corp" \
+  -H "secret-header: my-k8s-secret" \
+  localhost:8080/api/v1/get
+```
+
+GET request with wrong secret header will return `403`:
+
+```bash
+curl -s -w "\nhttp_code=%{http_code}" \
+  -H "Host: acme.corp" \
+  -H "secret-header: wrong-secret" \
+  localhost:8080/api/v1/get
+```
+
+POST request with JSON content type will return `200`:
+
+```bash
+curl -s -w "\nhttp_code=%{http_code}" \
+  -X POST \
+  -H "Host: acme.corp" \
+  -H "Content-Type: application/json" \
+  -d '{"data":"test"}' \
+  localhost:8080/api/v1/post
+```
+
+POST request without JSON content type will return `403`:
+
+```bash
+curl -s -w "\nhttp_code=%{http_code}" \
+  -X POST \
+  -H "Host: acme.corp" \
+  localhost:8080/api/v1/post
+```
+
 ## Wrap Up
 
 Congratulations on completing the tutorial!
