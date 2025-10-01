@@ -39,8 +39,8 @@ func Command() *cobra.Command {
 	var externalSources []string
 	var metricsAddress string
 	command := &cobra.Command{
-		Use:   "sidecar-authz-server",
-		Short: "Start the Kyverno Authz Server as a sidecar",
+		Use:   "authz-server",
+		Short: "Start the Kyverno Authz Server in standalone mode",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
