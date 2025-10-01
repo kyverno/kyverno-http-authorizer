@@ -263,7 +263,7 @@ kind: Ingress
 metadata:
   name: myapp
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9081/validate"
+    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/validate"
 spec:
   ingressClassName: nginx
   rules:
@@ -280,7 +280,7 @@ spec:
 EOF
 ```
 
-The `nginx.ingress.kubernetes.io/auth-url` annotation points to `localhost:9081` because the Kyverno Authz Server sidecar is injected into the Ingress NGINX controller pod and runs locally on port 9081 (gRPC). The Ingress is configured for host `myapp.com` and path `/api/v1/*` to match the ValidatingPolicy conditions.
+The `nginx.ingress.kubernetes.io/auth-url` annotation points to `localhost:9083` because the Kyverno Authz Server sidecar is injected into the Ingress NGINX controller pod and runs locally on port 9083 (HTTP). The Ingress is configured for host `myapp.com` and path `/api/v1/*` to match the ValidatingPolicy conditions.
 
 ## Testing
 
