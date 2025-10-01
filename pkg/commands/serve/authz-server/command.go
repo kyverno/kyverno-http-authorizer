@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/ctxprovider"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/httpauth"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
@@ -31,6 +32,7 @@ func Command() *cobra.Command {
 	var controlPlaneReconnectWait time.Duration
 	var controlPlaneMaxDialInterval time.Duration
 	var healthCheckInterval time.Duration
+	var standaloneMode bool
 	// var clientAddr string
 	command := &cobra.Command{
 		Use:   "authz-server",
@@ -68,11 +70,17 @@ func Command() *cobra.Command {
 					}
 
 					vpolCompiler := vpolcompiler.NewCompiler()
-					provider := listener.NewPolicyListener(controlPlaneAddr,
-						clientAddr, vpolCompiler,
-						logger, controlPlaneReconnectWait,
-						controlPlaneMaxDialInterval,
-						healthCheckInterval)
+					var provider engine.Provider
+					if !standaloneMode {
+						p := listener.NewPolicyListener(controlPlaneAddr,
+							clientAddr, vpolCompiler,
+							logger, controlPlaneReconnectWait,
+							controlPlaneMaxDialInterval,
+							healthCheckInterval)
+						provider = p
+					} else {
+
+					}
 
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
@@ -146,6 +154,7 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
+	command.Flags().BoolVar(&standaloneMode, "standalone-mode", false, "run the authz server as a sidecar or as a standalone service")
 	// command.Flags().StringVar(&clientAddr, "client-address", "", "Client address")
 
 	_ = command.MarkFlagRequired("control-plane-address")
