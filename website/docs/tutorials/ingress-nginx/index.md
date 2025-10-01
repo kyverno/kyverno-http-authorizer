@@ -129,20 +129,6 @@ Restart the Ingress NGINX controller to trigger sidecar injection:
 kubectl rollout restart deployment -n ingress-nginx ingress-nginx-controller
 ```
 
-### Deploy a sample application
-
-Httpbin is a well-known application that can be used to test HTTP requests and helps to show quickly how we can play with the request and response attributes.
-
-```bash
-# create the demo namespace
-kubectl create ns demo
-
-# deploy the httpbin application
-kubectl apply \
-  -n demo \
-  -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
-```
-
 ## Create a Kyverno ValidatingPolicy
 
 In summary the policy below does the following:
@@ -249,6 +235,20 @@ spec:
   - port: 3000
     targetPort: 3000
 EOF
+```
+
+### Deploy a sample application
+
+Httpbin is a well-known application that can be used to test HTTP requests and helps to show quickly how we can play with the request and response attributes.
+
+```bash
+# create the demo namespace
+kubectl create ns demo
+
+# deploy the httpbin application
+kubectl apply \
+  -n demo \
+  -f https://raw.githubusercontent.com/istio/istio/master/samples/httpbin/httpbin.yaml
 ```
 
 ### Create an Ingress with External Authentication
