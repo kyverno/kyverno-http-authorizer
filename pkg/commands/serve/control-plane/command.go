@@ -70,7 +70,7 @@ func Command() *cobra.Command {
 					vpolCompiler := vpolcompiler.NewCompiler()
 					logger := logrus.New()
 
-					extern, err := getExternalProviders(logger, vpolCompiler, externalSources...)
+					extern, err := GetExternalProviders(logger, vpolCompiler, externalSources...)
 					if err != nil {
 						return err
 					}
@@ -106,7 +106,7 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create policy reconciler
-						r := vpolprovider.NewPolicyReconciler(mgr.GetClient(), s)
+						r := vpolprovider.NewMeshReconciler(mgr.GetClient(), s)
 						if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
@@ -159,7 +159,7 @@ func Command() *cobra.Command {
 	return command
 }
 
-func getExternalProviders(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]*providers.FsProvider, error) {
+func GetExternalProviders(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]*providers.FsProvider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	mux.Add(gitfs.FS)

@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/kyverno/kyverno-http-authorizer/pkg/data"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
@@ -48,7 +50,30 @@ func NewFsProvider(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, fs
 	}
 }
 
+func (p *FsProvider) CompiledPolicies(ctx context.Context) ([]engine.CompiledPolicy, error) {
+	raw, err := p.loadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var policies []engine.CompiledPolicy
+	for _, pol := range raw {
+		compiled, err := p.vpolCompiler.Compile(pol)
+		if err != nil {
+			// TODO: handle single policy errors
+			continue
+		}
+		policies = append(policies, compiled)
+	}
+
+	return policies, nil
+}
+
 func (p *FsProvider) Policies(ctx context.Context) ([]*v1alpha1.ValidatingPolicy, error) {
+	return p.loadAll()
+}
+
+func (p *FsProvider) loadAll() ([]*v1alpha1.ValidatingPolicy, error) {
 	var policies []*v1alpha1.ValidatingPolicy
 	entries, err := fs.ReadDir(p.fs, ".")
 	if err != nil {

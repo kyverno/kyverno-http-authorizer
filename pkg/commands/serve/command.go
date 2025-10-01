@@ -1,9 +1,9 @@
 package serve
 
 import (
-	authzserver "github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve/authz-server"
 	controlplane "github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve/control-plane"
 	sidecarinjector "github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve/sidecar-injector"
+	sidecarauthz "github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve/sidecar-server"
 	validationwebhook "github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve/validation-webhook"
 	"github.com/spf13/cobra"
 )
@@ -13,7 +13,7 @@ func Command() *cobra.Command {
 		Use:   "serve",
 		Short: "Run Kyverno HTTP Authorizer servers",
 	}
-	command.AddCommand(authzserver.Command())
+	command.AddCommand(sidecarauthz.Command())
 	command.AddCommand(sidecarinjector.Command())
 	command.AddCommand(validationwebhook.Command())
 	command.AddCommand(controlplane.Command())

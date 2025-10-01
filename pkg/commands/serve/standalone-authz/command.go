@@ -1,42 +1,46 @@
-package authzserver
+package standalone
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/ctxprovider"
+	controlplane "github.com/kyverno/kyverno-http-authorizer/pkg/commands/serve/control-plane"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
+	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/httpauth"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/stream/listener"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
+
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/clientcmd"
 
 	nethttp "net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 func Command() *cobra.Command {
 	var probesAddress string
 	var httpAuthAddress string
-	var controlPlaneAddr string
-	var controlPlaneReconnectWait time.Duration
-	var controlPlaneMaxDialInterval time.Duration
-	var healthCheckInterval time.Duration
-	var standaloneMode bool
-	// var clientAddr string
+	var kubePolicySource bool
+	var kubeConfigOverrides clientcmd.ConfigOverrides
+	var externalSources []string
+	var metricsAddress string
 	command := &cobra.Command{
-		Use:   "authz-server",
-		Short: "Start the Kyverno Authz Server",
+		Use:   "sidecar-authz-server",
+		Short: "Start the Kyverno Authz Server as a sidecar",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
@@ -53,12 +57,11 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
-					clientAddr := os.Getenv("POD_IP")
-					if clientAddr == "" {
-						return fmt.Errorf("can't start auth server, no POD_IP has been passed")
-					}
-
-					cfg, err := rest.InClusterConfig()
+					kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+						clientcmd.NewDefaultClientConfigLoadingRules(),
+						&kubeConfigOverrides,
+					)
+					cfg, err := kubeConfig.ClientConfig()
 					if err != nil {
 						return err
 					}
@@ -70,16 +73,48 @@ func Command() *cobra.Command {
 					}
 
 					vpolCompiler := vpolcompiler.NewCompiler()
-					var provider engine.Provider
-					if !standaloneMode {
-						p := listener.NewPolicyListener(controlPlaneAddr,
-							clientAddr, vpolCompiler,
-							logger, controlPlaneReconnectWait,
-							controlPlaneMaxDialInterval,
-							healthCheckInterval)
-						provider = p
-					} else {
+					extern, err := controlplane.GetExternalProviders(logger, vpolCompiler, externalSources...)
+					if err != nil {
+						return err
+					}
+					externalProviders := []engine.Provider{}
+					for _, e := range extern {
+						externalProviders = append(externalProviders, e)
+					}
+					provider := providers.NewComposite(externalProviders...)
 
+					if kubePolicySource {
+						// create a controller manager
+						scheme := runtime.NewScheme()
+						if err := v1alpha1.Install(scheme); err != nil {
+							return err
+						}
+						mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+							Scheme: scheme,
+							Metrics: metricsserver.Options{
+								BindAddress: metricsAddress,
+							},
+						})
+						if err != nil {
+							return fmt.Errorf("failed to construct manager: %w", err)
+						}
+						// create policy reconciler
+						r := vpolprovider.NewStandaloneReconciler(mgr.GetClient(), vpolCompiler)
+						if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
+							return fmt.Errorf("failed to register controller to manager: %w", err)
+						}
+						// start manager
+						group.StartWithContext(ctx, func(ctx context.Context) {
+							// cancel context at the end
+							defer cancel()
+							mgrErr = mgr.Start(ctx)
+						})
+						if !mgr.GetCache().WaitForCacheSync(ctx) {
+							defer cancel()
+							return fmt.Errorf("failed to wait for cache sync")
+						}
+						// append the kube provider to the current existing provider
+						provider = providers.NewComposite([]engine.Provider{provider, r}...)
 					}
 
 					// create http and grpc server
@@ -121,24 +156,9 @@ func Command() *cobra.Command {
 										time.Sleep(time.Second * 10)
 										continue
 									}
-									logger.WithError(err).Error("fatal error running probes server, not retrying")
+									logger.WithError(err).Error("fatal error running http server, not retrying")
 									return
 								}
-							}
-						}
-					})
-					group.StartWithContext(ctx, func(ctx context.Context) {
-						// control plane connection
-						for {
-							select {
-							case <-ctx.Done():
-								return
-							default:
-								if grpcErr = provider.Start(ctx); grpcErr != nil {
-									logger.Error("error connecting to the control plane, sleeping 10 seconds then retrying")
-									time.Sleep(time.Second * 10)
-								}
-								continue
 							}
 						}
 					})
@@ -148,15 +168,12 @@ func Command() *cobra.Command {
 			})
 		},
 	}
-	command.Flags().DurationVar(&controlPlaneReconnectWait, "control-plane-reconnect-wait", 3*time.Second, "Duration to wait before retrying connecting to the control plane")
-	command.Flags().DurationVar(&controlPlaneMaxDialInterval, "control-plane-max-dial-interval", 8*time.Second, "Duration to wait before stopping attempts of sending a policy to a client")
-	command.Flags().DurationVar(&healthCheckInterval, "health-check-interval", 30*time.Second, "Interval for sending health checks")
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
-	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
-	command.Flags().BoolVar(&standaloneMode, "standalone-mode", false, "run the authz server as a sidecar or as a standalone service")
-	// command.Flags().StringVar(&clientAddr, "client-address", "", "Client address")
-
+	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
+	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
+	command.Flags().StringArrayVar(&externalSources, "external-policy-source", nil, "External policy sources")
+	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
 }
