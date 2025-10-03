@@ -155,6 +155,7 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().StringArrayVar(&externalSources, "external-policy-source", nil, "External policy sources")
+	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }
