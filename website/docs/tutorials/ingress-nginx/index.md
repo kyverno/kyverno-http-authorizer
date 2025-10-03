@@ -140,7 +140,7 @@ In summary the policy below does the following:
 - Denies all other requests with `403`
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
+apiVersion: policies.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
   name: example-api
@@ -149,11 +149,8 @@ spec:
     mode: HTTP
   matchConditions:
   - expression: |
-      object.host == "myapp.com"
-    name: host
-  - expression: |
-      object.path.startsWith("/api/v1")
-    name: v1-api
+      object.headers.get("x-original-url") == "https://myapp.com/api/v1"
+    name: uri
   variables:
   - name: secretWord
     expression: |
@@ -263,7 +260,8 @@ kind: Ingress
 metadata:
   name: myapp
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/validate"
+    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/"
+    nginx.ingress.kubernetes.io/auth-method: "POST"
 spec:
   ingressClassName: nginx
   rules:
@@ -369,7 +367,7 @@ EOF
 ```yaml
 # create policy that reads from configmap
 kubectl apply -f - <<EOF
-apiVersion: envoy.kyverno.io/v1alpha1
+apiVersion: policies.kyverno.io/v1alpha1
 kind: ValidatingPolicy
 metadata:
   name: acme-api
@@ -378,11 +376,8 @@ spec:
     mode: HTTP
   matchConditions:
   - expression: |
-      object.host == "acme.corp"
+      object.headers.get("x-original-url") == "https://acme.corp/api/v1"
     name: host
-  - expression: |
-      object.path.startsWith("/api/v1")
-    name: v1-api
   variables:
   - name: secretWord
     expression: |
@@ -413,7 +408,8 @@ kind: Ingress
 metadata:
   name: acme
   annotations:
-    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/validate"
+    nginx.ingress.kubernetes.io/auth-url: "http://localhost:9083/"
+    nginx.ingress.kubernetes.io/auth-method: "POST"
 spec:
   ingressClassName: nginx
   rules:
