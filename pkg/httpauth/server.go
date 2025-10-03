@@ -8,15 +8,11 @@ import (
 	"github.com/kyverno/kyverno-http-authorizer/pkg/server"
 )
 
-func NewServer(addr string, provider engine.Provider) server.ServerFunc {
+func NewServer(addr string, provider engine.Provider, a *authorizer) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create mux
 		mux := http.NewServeMux()
 		// register health check
-		a := Authorizer{
-			provider: provider,
-		}
-
 		mux.Handle("POST /", http.HandlerFunc(a.NewHandler()))
 		// create server
 		s := &http.Server{

@@ -6,10 +6,10 @@ import (
 	"io/fs"
 	"sync"
 
-	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/data"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/kyverno/pkg/ext/file"
 	"github.com/kyverno/pkg/ext/resource/convert"
 	"github.com/kyverno/pkg/ext/resource/loader"

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -37,7 +38,7 @@ func RunHttp(ctx context.Context, server *http.Server, certFile, keyFile string)
 			shutdownErr = server.Shutdown(ctx)
 		})
 		serve := func() error {
-			fmt.Printf("HTTP Server starting at %s...\n", server.Addr)
+			logrus.Infof("HTTP Server starting at %s...\n", server.Addr)
 			if certFile != "" && keyFile != "" {
 				// server over https
 				return server.ListenAndServeTLS(certFile, keyFile)

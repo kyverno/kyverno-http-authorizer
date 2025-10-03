@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ValidatingPolicyService_ValidatePoliciesStream_FullMethodName = "/kyverno.http.v1alpha1.ValidatingPolicyService/ValidatePoliciesStream"
+	ValidatingPolicyService_ValidatingPoliciesStream_FullMethodName = "/kyverno.http.v1alpha1.ValidatingPolicyService/ValidatingPoliciesStream"
+	ValidatingPolicyService_HealthCheck_FullMethodName              = "/kyverno.http.v1alpha1.ValidatingPolicyService/HealthCheck"
 )
 
 // ValidatingPolicyServiceClient is the client API for ValidatingPolicyService service.
@@ -28,7 +29,8 @@ const (
 //
 // ValidatingPolicyService provides bidirectional communication for validating policies
 type ValidatingPolicyServiceClient interface {
-	ValidatePoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyRequest, ValidatingPolicyResponse], error)
+	ValidatingPoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyStreamRequest, ValidatingPolicy], error)
+	HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error)
 }
 
 type validatingPolicyServiceClient struct {
@@ -39,18 +41,28 @@ func NewValidatingPolicyServiceClient(cc grpc.ClientConnInterface) ValidatingPol
 	return &validatingPolicyServiceClient{cc}
 }
 
-func (c *validatingPolicyServiceClient) ValidatePoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyRequest, ValidatingPolicyResponse], error) {
+func (c *validatingPolicyServiceClient) ValidatingPoliciesStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ValidatingPolicyStreamRequest, ValidatingPolicy], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ValidatingPolicyService_ServiceDesc.Streams[0], ValidatingPolicyService_ValidatePoliciesStream_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ValidatingPolicyService_ServiceDesc.Streams[0], ValidatingPolicyService_ValidatingPoliciesStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[ValidatingPolicyRequest, ValidatingPolicyResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[ValidatingPolicyStreamRequest, ValidatingPolicy]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ValidatingPolicyService_ValidatePoliciesStreamClient = grpc.BidiStreamingClient[ValidatingPolicyRequest, ValidatingPolicyResponse]
+type ValidatingPolicyService_ValidatingPoliciesStreamClient = grpc.BidiStreamingClient[ValidatingPolicyStreamRequest, ValidatingPolicy]
+
+func (c *validatingPolicyServiceClient) HealthCheck(ctx context.Context, in *HealthCheckRequest, opts ...grpc.CallOption) (*HealthCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HealthCheckResponse)
+	err := c.cc.Invoke(ctx, ValidatingPolicyService_HealthCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
 // ValidatingPolicyServiceServer is the server API for ValidatingPolicyService service.
 // All implementations must embed UnimplementedValidatingPolicyServiceServer
@@ -58,7 +70,8 @@ type ValidatingPolicyService_ValidatePoliciesStreamClient = grpc.BidiStreamingCl
 //
 // ValidatingPolicyService provides bidirectional communication for validating policies
 type ValidatingPolicyServiceServer interface {
-	ValidatePoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyRequest, ValidatingPolicyResponse]) error
+	ValidatingPoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyStreamRequest, ValidatingPolicy]) error
+	HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error)
 	mustEmbedUnimplementedValidatingPolicyServiceServer()
 }
 
@@ -69,8 +82,11 @@ type ValidatingPolicyServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedValidatingPolicyServiceServer struct{}
 
-func (UnimplementedValidatingPolicyServiceServer) ValidatePoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyRequest, ValidatingPolicyResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method ValidatePoliciesStream not implemented")
+func (UnimplementedValidatingPolicyServiceServer) ValidatingPoliciesStream(grpc.BidiStreamingServer[ValidatingPolicyStreamRequest, ValidatingPolicy]) error {
+	return status.Errorf(codes.Unimplemented, "method ValidatingPoliciesStream not implemented")
+}
+func (UnimplementedValidatingPolicyServiceServer) HealthCheck(context.Context, *HealthCheckRequest) (*HealthCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HealthCheck not implemented")
 }
 func (UnimplementedValidatingPolicyServiceServer) mustEmbedUnimplementedValidatingPolicyServiceServer() {
 }
@@ -94,12 +110,30 @@ func RegisterValidatingPolicyServiceServer(s grpc.ServiceRegistrar, srv Validati
 	s.RegisterService(&ValidatingPolicyService_ServiceDesc, srv)
 }
 
-func _ValidatingPolicyService_ValidatePoliciesStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ValidatingPolicyServiceServer).ValidatePoliciesStream(&grpc.GenericServerStream[ValidatingPolicyRequest, ValidatingPolicyResponse]{ServerStream: stream})
+func _ValidatingPolicyService_ValidatingPoliciesStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ValidatingPolicyServiceServer).ValidatingPoliciesStream(&grpc.GenericServerStream[ValidatingPolicyStreamRequest, ValidatingPolicy]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ValidatingPolicyService_ValidatePoliciesStreamServer = grpc.BidiStreamingServer[ValidatingPolicyRequest, ValidatingPolicyResponse]
+type ValidatingPolicyService_ValidatingPoliciesStreamServer = grpc.BidiStreamingServer[ValidatingPolicyStreamRequest, ValidatingPolicy]
+
+func _ValidatingPolicyService_HealthCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HealthCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ValidatingPolicyServiceServer).HealthCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ValidatingPolicyService_HealthCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ValidatingPolicyServiceServer).HealthCheck(ctx, req.(*HealthCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 // ValidatingPolicyService_ServiceDesc is the grpc.ServiceDesc for ValidatingPolicyService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -107,11 +141,16 @@ type ValidatingPolicyService_ValidatePoliciesStreamServer = grpc.BidiStreamingSe
 var ValidatingPolicyService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "kyverno.http.v1alpha1.ValidatingPolicyService",
 	HandlerType: (*ValidatingPolicyServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "HealthCheck",
+			Handler:    _ValidatingPolicyService_HealthCheck_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ValidatePoliciesStream",
-			Handler:       _ValidatingPolicyService_ValidatePoliciesStream_Handler,
+			StreamName:    "ValidatingPoliciesStream",
+			Handler:       _ValidatingPolicyService_ValidatingPoliciesStream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

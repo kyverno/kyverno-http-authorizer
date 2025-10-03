@@ -5,6 +5,7 @@ package kyverno.http.v1alpha1;
 option go_package = "github.com/kyverno/kyverno-http-authorizer/apis/proto/v1alpha1";
 
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/timestamp.proto";
 
 // ValidatingPolicySpec defines the desired behavior of the ValidatingPolicy.
 message ValidatingPolicySpec {
@@ -12,7 +13,7 @@ message ValidatingPolicySpec {
   repeated Validation validations = 2;
 
   // How to handle policy failures. Defaults to Fail.
-  optional FailurePolicyType failure_policy = 3;
+  optional string failure_policy = 3;
 
   // Conditions that must be met for validation. Maximum 64 conditions.
   repeated MatchCondition match_conditions = 5;
@@ -21,29 +22,7 @@ message ValidatingPolicySpec {
   repeated Variable variables = 6;
 
   // Actions to take when validation fails. Required.
-  repeated ValidationAction validation_actions = 8;
-}
-
-// FailurePolicyType defines failure handling behavior
-enum FailurePolicyType {
-  FAILURE_POLICY_TYPE_UNSPECIFIED = 0;
-  FAILURE_POLICY_TYPE_IGNORE = 1;
-  FAILURE_POLICY_TYPE_FAIL = 2;
-}
-
-// ValidationAction defines actions for policy violations
-enum ValidationAction {
-  VALIDATION_ACTION_UNSPECIFIED = 0;
-  VALIDATION_ACTION_DENY = 1;
-  VALIDATION_ACTION_AUDIT = 2;
-  VALIDATION_ACTION_WARN = 3;
-}
-
-// MatchPolicyType defines resource matching behavior
-enum MatchPolicyType {
-  MATCH_POLICY_TYPE_UNSPECIFIED = 0;
-  MATCH_POLICY_TYPE_EXACT = 1;
-  MATCH_POLICY_TYPE_EQUIVALENT = 2;
+  string validation_actions = 8;
 }
 
 
@@ -81,21 +60,25 @@ message Variable {
 }
 
 // Request message for validating policy operations
-message ValidatingPolicyRequest {
-  ValidatingPolicySpec spec = 1;
-  map<string, string> metadata = 2;
-  string request_id = 3;
+message ValidatingPolicy {
+  string name = 1;
+  bool delete = 2;
+  ValidatingPolicySpec spec = 3;
 }
 
-// Response message for validating policy operations
-message ValidatingPolicyResponse {
-  bool success = 1;
-  string message = 2;
-  map<string, string> metadata = 3;
-  string request_id = 4;
+message ValidatingPolicyStreamRequest {
+  string client_address = 1;
 }
+
+message HealthCheckRequest {
+  string client_address = 1;
+  google.protobuf.Timestamp time = 2;
+}
+
+message HealthCheckResponse {}
 
 // ValidatingPolicyService provides bidirectional communication for validating policies
 service ValidatingPolicyService {
-  rpc ValidatePoliciesStream(stream ValidatingPolicyRequest) returns (stream ValidatingPolicyResponse);
+  rpc ValidatingPoliciesStream(stream ValidatingPolicyStreamRequest) returns (stream ValidatingPolicy);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
 }

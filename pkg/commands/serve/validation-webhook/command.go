@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/probes"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/signals"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/webhook/validation"
+	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 	"github.com/spf13/cobra"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/runtime"

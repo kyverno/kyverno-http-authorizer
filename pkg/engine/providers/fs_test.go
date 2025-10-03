@@ -6,7 +6,7 @@ package providers_test
 // 	"testing/fstest"
 
 // 	authv3 "github.com/envoyproxy/go-control-plane/envoy/service/auth/v3"
-// 	"github.com/kyverno/kyverno-http-authorizer/apis/v1alpha1"
+// 	"github.com/kyverno/kyverno/api/policies.kyverno.io/v1alpha1"
 // 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 // 	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/generic/providers"
 // 	"github.com/stretchr/testify/assert"

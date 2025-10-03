@@ -3,13 +3,11 @@ package cel
 import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/envoy"
 	httpauth "github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/http"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/cel/libs/jwt"
 
 	"github.com/kyverno/kyverno/pkg/cel/libs/http"
-	"github.com/kyverno/kyverno/pkg/cel/libs/image"
-	"github.com/kyverno/kyverno/pkg/cel/libs/imagedata"
+	"github.com/kyverno/kyverno/pkg/cel/libs/resource"
 
 	"k8s.io/apiserver/pkg/cel/library"
 )
@@ -39,12 +37,10 @@ func NewEnv() (*cel.Env, error) {
 		library.Regex(),
 		library.URLs(),
 		// register our libs
-		envoy.Lib(),
 		jwt.Lib(),
 		// register kyverno libs
-		image.Lib(),
-		imagedata.Lib(),
 		http.Lib(),
 		httpauth.Lib(),
+		resource.Lib(),
 	)
 }

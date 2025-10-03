@@ -4,23 +4,18 @@ import (
 	"context"
 	"net"
 
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/server"
 	"github.com/kyverno/kyverno-http-authorizer/proto/validatingpolicy/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-func NewServer(network, addr string, provider engine.Provider) server.ServerFunc {
+func NewServer(network, addr string, vpolServer v1alpha1.ValidatingPolicyServiceServer) server.ServerFunc {
 	return func(ctx context.Context) error {
 		// create a server
 		s := grpc.NewServer()
-		// setup our authorization service
-		svc := &service{
-			provider: provider,
-		}
 		// register our authorization service
-		v1alpha1.RegisterValidatingPolicyServiceServer(s, svc)
+		v1alpha1.RegisterValidatingPolicyServiceServer(s, vpolServer)
 		reflection.Register(s)
 		// create a listener
 		l, err := net.Listen(network, addr)

@@ -50,7 +50,7 @@ func NewRequest(r *http.Request) (Request, error) {
 		Method:   r.Method,
 		Headers:  &KV{inner: r.Header},
 		Path:     r.URL.Path,
-		Host:     r.URL.Host,
+		Host:     r.Host,
 		Protocol: r.Proto,
 		RawBody:  bodyBytes,
 		Body:     string(bodyBytes),

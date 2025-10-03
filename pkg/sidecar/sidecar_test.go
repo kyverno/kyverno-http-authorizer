@@ -39,14 +39,14 @@ func TestSidecar(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Sidecar(tt.image)
+			got := Sidecar(tt.image, "") //TODO: fix those tests
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestInject(t *testing.T) {
-	sidecar := Sidecar("foo:bar")
+	sidecar := Sidecar("foo:bar", "") //TODO: fix those tests
 	tests := []struct {
 		name      string
 		pod       corev1.Pod

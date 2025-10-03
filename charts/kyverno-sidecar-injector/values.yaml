@@ -141,7 +141,7 @@ containers:
       registry: ghcr.io
 
       # -- Image repository
-      repository: kyverno/kyverno-envoy-plugin
+      repository: kyverno/kyverno-http-authorizer
 
       # -- (string) Image tag
       # Defaults to appVersion in Chart.yaml if omitted
@@ -230,6 +230,7 @@ containers:
       - --cert-file=/opt/kubernetes-sidecar-injector/certs/tls.crt
       - --key-file=/opt/kubernetes-sidecar-injector/certs/tls.key
       - --sidecar-image={{ include "sidecar-injector.image" .Values.containers.injector.image }}
+      - --control-plane-address={{ .Values.control-plane-address }}
 
 service:
 

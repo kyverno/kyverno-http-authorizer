@@ -14,14 +14,15 @@ func Command() *cobra.Command {
 	var keyFile string
 	var sidecarImage string
 	var externalPolicySources []string
+	var controlPlaneAddr string
 	command := &cobra.Command{
 		Use:   "sidecar-injector",
-		Short: "Start the Kubernetes mutating webhook injecting Kyverno Authz Server sidecars into pod containers",
+		Short: "Start the Kubernetes mutating webhook injecting Kyverno HTTP Authorizer sidecars into pod containers",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// setup signals aware context
 			return signals.Do(context.Background(), func(ctx context.Context) error {
 				// create server
-				http := mutation.NewSidecarInjectorServer(address, sidecarImage, certFile, keyFile, externalPolicySources...)
+				http := mutation.NewSidecarInjectorServer(address, sidecarImage, controlPlaneAddr, certFile, keyFile, externalPolicySources...)
 				// run server
 				return http.Run(ctx)
 			})
@@ -31,6 +32,9 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&certFile, "cert-file", "", "File containing tls certificate")
 	command.Flags().StringVar(&keyFile, "key-file", "", "File containing tls private key")
 	command.Flags().StringVar(&sidecarImage, "sidecar-image", "", "Image to use in sidecar")
+	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "The control plane address to inject into the sidecars")
 	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
+
+	_ = command.MarkFlagRequired("control-plane-address")
 	return command
 }

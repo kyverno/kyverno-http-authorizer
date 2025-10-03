@@ -1,6 +1,6 @@
 # Adopters
 
-This document lists organizations that are adopting the kyverno-envoy-plugin.
+This document lists organizations that are adopting the kyverno-http-authorizer.
 
 ## Organizations
 
@@ -10,7 +10,7 @@ This document lists organizations that are adopting the kyverno-envoy-plugin.
 
 ## How to Get Listed
 
-If your organization is using the `kyverno-envoy-plugin`, please submit a pull request with your details or open an issue on [GitHub](https://github.com/kyverno/kyverno-envoy-plugin/issues) to have your organization added.
+If your organization is using the `kyverno-http-authorizer`, please submit a pull request with your details or open an issue on [GitHub](https://github.com/kyverno/kyverno-http-authorizer/issues) to have your organization added.
 
 ## Additional Information
 
