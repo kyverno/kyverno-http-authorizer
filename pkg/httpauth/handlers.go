@@ -1,7 +1,6 @@
 package httpauth
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"net/http"
@@ -31,12 +30,12 @@ func NewAuthorizer(ctx resource.ContextInterface, p engine.Provider, logger *log
 func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		a.logger.Infof("received request from %s", r.RemoteAddr)
-		reader := bufio.NewReader(r.Body)
-		req, err := http.ReadRequest(reader)
-		if err != nil {
-			writeErrResp(w, err)
-			return
-		}
+		// reader := bufio.NewReader(r.Body)
+		// req, err := http.ReadRequest(reader)
+		// if err != nil {
+		// 	writeErrResp(w, err)
+		// 	return
+		// }
 
 		pols, err := a.provider.CompiledPolicies(context.Background())
 		if err != nil {
@@ -44,7 +43,7 @@ func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		ruleFuncs := []engine.RequestFunc{}
-		httpReq, err := httpauth.NewRequest(req)
+		httpReq, err := httpauth.NewRequest(r)
 		if err != nil {
 			writeErrResp(w, err)
 			return
