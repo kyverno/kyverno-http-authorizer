@@ -133,7 +133,7 @@ kubectl rollout restart deployment -n ingress-nginx ingress-nginx-controller
 
 In summary the policy below does the following:
 
-- Is triggered only when the host is `myapp.com` and the path starts with `/api/v1`
+- Is triggered only when the host is `myapp.com` and the path starts with `/api/v1`, using the Ingress NGINX `x-original-url` header
 - Fetches a secret word from an external service
 - Allows GET requests with a matching secret header
 - Allows POST requests with `application/json` content type
@@ -278,7 +278,7 @@ spec:
 EOF
 ```
 
-The `nginx.ingress.kubernetes.io/auth-url` annotation points to `localhost:9083` because the Kyverno Authz Server sidecar is injected into the Ingress NGINX controller pod and runs locally on port 9083 (HTTP). The Ingress is configured for host `myapp.com` and path `/api/v1/*` to match the ValidatingPolicy conditions.
+The `nginx.ingress.kubernetes.io/auth-url` annotation points to `localhost:9083` because the Kyverno Authz Server sidecar is injected into the Ingress NGINX controller pod and runs locally on port 9083 (HTTP), the `nginx.ingress.kubernetes.io/auth-method` annotation tells NGINX to use POST as the method for calling the authentication server. The Ingress is configured for host `myapp.com` and path `/api/v1/*` to match the ValidatingPolicy conditions.
 
 ## Testing
 
