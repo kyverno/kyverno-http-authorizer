@@ -38,6 +38,7 @@ func Command() *cobra.Command {
 	var kubeConfigOverrides clientcmd.ConfigOverrides
 	var externalSources []string
 	var metricsAddress string
+	var nestedRequest bool
 	command := &cobra.Command{
 		Use:   "authz-server",
 		Short: "Start the Kyverno Authz Server in standalone mode",
@@ -119,7 +120,7 @@ func Command() *cobra.Command {
 
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
-					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), provider, logger)
+					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), provider, nestedRequest, logger)
 					httpAuth := httpauth.NewServer(httpAuthAddress, provider, a)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
@@ -170,9 +171,10 @@ func Command() *cobra.Command {
 	}
 	command.Flags().StringVar(&probesAddress, "probes-address", ":9088", "Address to listen on for health checks")
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
-	command.Flags().StringVar(&probesAddress, "probes-address", ":9080", "Address to listen on for health checks")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
 	command.Flags().StringArrayVar(&externalSources, "external-policy-source", nil, "External policy sources")
+	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
+	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
