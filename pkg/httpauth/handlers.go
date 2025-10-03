@@ -1,6 +1,7 @@
 package httpauth
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"net/http"
@@ -14,28 +15,33 @@ import (
 )
 
 type authorizer struct {
-	provider    engine.Provider
-	logger      *logrus.Logger
-	resourceCtx resource.ContextInterface
+	provider      engine.Provider
+	logger        *logrus.Logger
+	resourceCtx   resource.ContextInterface
+	nestedRequest bool
 }
 
-func NewAuthorizer(ctx resource.ContextInterface, p engine.Provider, logger *logrus.Logger) *authorizer {
+func NewAuthorizer(ctx resource.ContextInterface, p engine.Provider, nestedRequest bool, logger *logrus.Logger) *authorizer {
 	return &authorizer{
-		provider:    p,
-		logger:      logger,
-		resourceCtx: ctx,
+		provider:      p,
+		logger:        logger,
+		resourceCtx:   ctx,
+		nestedRequest: nestedRequest,
 	}
 }
 
 func (a *authorizer) NewHandler() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		a.logger.Infof("received request from %s", r.RemoteAddr)
-		// reader := bufio.NewReader(r.Body)
-		// req, err := http.ReadRequest(reader)
-		// if err != nil {
-		// 	writeErrResp(w, err)
-		// 	return
-		// }
+		if a.nestedRequest {
+			reader := bufio.NewReader(r.Body)
+			req, err := http.ReadRequest(reader)
+			if err != nil {
+				writeErrResp(w, err)
+				return
+			}
+			r = req
+		}
 
 		pols, err := a.provider.CompiledPolicies(context.Background())
 		if err != nil {

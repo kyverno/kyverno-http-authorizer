@@ -30,6 +30,7 @@ func Command() *cobra.Command {
 	var controlPlaneMaxDialInterval time.Duration
 	var healthCheckInterval time.Duration
 	var clientAddr string
+	var nestedRequest bool
 	command := &cobra.Command{
 		Use:   "sidecar-authz-server",
 		Short: "Start the Kyverno Authz Server as a sidecar",
@@ -75,7 +76,7 @@ func Command() *cobra.Command {
 
 					// create http and grpc server
 					http := probes.NewServer(probesAddress)
-					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), provider, logger)
+					a := httpauth.NewAuthorizer(ctxprovider.NewContextProvider(dyn), provider, nestedRequest, logger)
 					httpAuth := httpauth.NewServer(httpAuthAddress, provider, a)
 					// run servers
 					group.StartWithContext(ctx, func(ctx context.Context) {
@@ -146,6 +147,7 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&httpAuthAddress, "http-auth-server-address", ":9083", "Address to serve the http authorization server on")
 	command.Flags().StringVar(&controlPlaneAddr, "control-plane-address", "", "Control plane address")
 	command.Flags().StringVar(&clientAddr, "client-address", "", "Client address")
+	command.Flags().BoolVar(&nestedRequest, "nested-request", false, "Expect the requests to validate to be in the body of the original request")
 
 	_ = command.MarkFlagRequired("control-plane-address")
 	return command
