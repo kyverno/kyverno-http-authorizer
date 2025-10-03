@@ -9,11 +9,20 @@ import (
 
 func TestSidecar(t *testing.T) {
 	tests := []struct {
-		name  string
-		image string
-		want  corev1.Container
+		name                        string
+		image                       string
+		controlPlaneAddr            string
+		controlPlaneReconnectWait   string
+		controlPlaneMaxDialInterval string
+		healthCheckInterval         string
+		want                        corev1.Container
 	}{{
-		image: "foo:bar",
+		name:                        "basic sidecar",
+		image:                       "foo:bar",
+		controlPlaneAddr:            "http://control-plane:9081",
+		controlPlaneReconnectWait:   "3s",
+		controlPlaneMaxDialInterval: "8s",
+		healthCheckInterval:         "30s",
 		want: corev1.Container{
 			Name:            "kyverno-authz-server",
 			ImagePullPolicy: corev1.PullIfNotPresent,
@@ -31,22 +40,33 @@ func TestSidecar(t *testing.T) {
 				"serve",
 				"authz-server",
 				"--probes-address=:9080",
-				"--grpc-address=:9081",
-				"--metrics-address=:9082",
-				"--kube-policy-source=false",
+				"--control-plane-address=http://control-plane:9081",
+				"--control-plane-reconnect-wait=3s",
+				"--control-plane-max-dial-interval=8s",
+				"--health-check-interval=30s",
+			},
+			Env: []corev1.EnvVar{
+				{
+					Name: "POD_IP",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "status.podIP",
+						},
+					},
+				},
 			},
 		},
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Sidecar(tt.image, "") //TODO: fix those tests
+			got := Sidecar(tt.image, tt.controlPlaneAddr, tt.controlPlaneReconnectWait, tt.controlPlaneMaxDialInterval, tt.healthCheckInterval)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestInject(t *testing.T) {
-	sidecar := Sidecar("foo:bar", "") //TODO: fix those tests
+	sidecar := Sidecar("foo:bar", "http://control-plane:9081", "3s", "8s", "30s")
 	tests := []struct {
 		name      string
 		pod       corev1.Pod

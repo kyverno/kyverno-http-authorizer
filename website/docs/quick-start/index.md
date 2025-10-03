@@ -1,39 +1,64 @@
 # Quick start
 
-The Kyverno Envoy Plugin is a powerful tool that integrates with the Envoy proxy.
+The Kyverno HTTP Authorizer is a powerful authorization service that validates HTTP requests using policy-based rules written in CEL (Common Expression Language).
 
-It allows you to enforce Kyverno policies on incoming and outgoing traffic in a service mesh environment, providing an additional layer of security and control over your applications.
+It provides fine-grained, context-aware access control for your applications.
 
 ## Overview 
 
-[Envoy](https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy) is a Layer 7 proxy and communication bus tailored for large-scale, modern service-oriented architectures. Starting from version 1.7.0, Envoy includes an [External Authorization filter](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html) that interfaces with an authorization service to determine the legitimacy of incoming requests.
+Modern applications need flexible authorization mechanisms that can evaluate requests based on headers, paths, methods, and external data sources. The Kyverno HTTP Authorizer provides this capability by accepting vanilla HTTP requests and returning custom responses based on policy evaluation.
 
-This functionality allows authorization decisions to be offloaded to an external service, which can access the request context. The request context includes details such as the origin and destination of the network activity, as well as specifics of the network request (e.g., HTTP request). This information enables the external service to make a well-informed decision regarding the authorization of the incoming request processed by Envoy.
+The authorizer integrates with HTTP proxies and ingress controllers (like Ingress NGINX) using standard external authentication protocols. Applications can also call the authorizer directly via HTTP, though this requires code changes to integrate the authorization check.
 
 ![overview](../schemas/overview.png)
 
-## What is the Kyverno Envoy Plugin?
+## What is the Kyverno HTTP Authorizer?
 
-The [Kyverno Envoy Plugin](https://github.com/kyverno/kyverno-envoy-plugin) is gRPC server that implements [Envoy External Authorization API](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html).
+The [Kyverno HTTP Authorizer](https://github.com/kyverno/kyverno-http-authorizer) is an HTTP/gRPC authorization server that validates requests against Kyverno policies defined using CEL expressions.
 
-This allows you to enforce Kyverno policies on incoming and outgoing traffic in a service mesh environment, providing an additional layer of security and control over your applications. You can use this version of Kyverno to enforce fine-grained, context-aware access control policies with Envoy without modifying your microservice.
+Key features include:
+
+- **Policy-based authorization**: Define authorization rules using CEL expressions that can evaluate request attributes (headers, paths, methods, etc.)
+- **External data integration**: Fetch data from HTTP services or Kubernetes resources (ConfigMaps, Secrets) to make authorization decisions
+- **Sidecar deployment**: Runs as a sidecar container alongside your applications or proxies for low-latency authorization checks
+- **Control plane architecture**: Centralized policy management with distributed enforcement through sidecars
+- **Vanilla HTTP interface**: Accepts standard HTTP requests and returns custom HTTP responses based on policy evaluation
+- **Integration with proxies**: Works with Ingress NGINX and other proxies that support external authentication
 
 ## How does this work?
 
-In addition to the Envoy sidecar, your application pods will include a Kyverno Authz Server component, either as a sidecar or as a separate pod. When Envoy receives an API request intended for your microservice, it consults the Kyverno Authz Server to determine whether the request should be permitted or not.
+The Kyverno HTTP Authorizer uses a control plane and sidecar architecture:
+
+1. **Control Plane**: Manages ValidatingPolicy resources and distributes them to sidecars
+2. **Sidecar Injector**: Automatically injects authorization sidecars into pods via a mutating webhook
+3. **Authorization Sidecar**: Runs alongside your proxy/application and validates HTTP requests against policies
+
+### Request Flow
+
+When an HTTP request needs authorization:
+
+1. The proxy (e.g., Ingress NGINX) or application sends a vanilla HTTP request to the authorization sidecar on localhost
+2. The sidecar receives the request details (host, path, headers, method, etc.)
+3. The sidecar evaluates the request against policies received from the control plane
+4. Based on the policy evaluation, the sidecar returns a custom HTTP response:
+   - **Allow**: Returns 200 with optional custom headers and response body
+   - **Deny**: Returns a custom status code (e.g., 403, 401) with a custom response body
+
+The policies can fetch external data (from HTTP services or Kubernetes resources) to make authorization decisions, enabling dynamic and context-aware access control.
 
 ![filters chain](../schemas/filters-chain.png)
 
-Performing policy evaluations locally with Envoy is advantageous, as it eliminates the need for an additional network hop for authorization checks, thus enhancing both performance and availability.
+Performing policy evaluations locally in the sidecar is advantageous, as it eliminates the need for an additional network hop for authorization checks, thus enhancing both performance and availability.
 
 !!!info
 
-    The Kyverno Envoy Plugin is frequently deployed in Kubernetes environments as a sidecar container or as a separate pod. Additionally, it can be used in other environments as a standalone process running alongside Envoy.
+    The Kyverno HTTP Authorizer is designed for Kubernetes environments where sidecars are automatically injected into pods. It can also be deployed as a standalone service for non-Kubernetes environments.
 
 ## Additional Resources 
 
-See the following pages on [envoyproxy.io](https://www.envoyproxy.io/) for more information on external authorization:
+See the following resources to learn more:
 
-- [External Authorization](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ext_authz_filter.html) to learn about the External Authorization filter.
-- [Network](https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/network_filters/ext_authz_filter#config-network-filters-ext-authz) and [HTTP](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter#config-http-filters-ext-authz) for details on configuring the External Authorization filter.
+- [Kyverno CEL Libraries](https://kyverno.io/docs/policy-types/cel-libraries/) to learn about available CEL functions for policies
+- [Tutorials](../tutorials/) for step-by-step guides on integrating with Ingress NGINX and Gateway API
+- [Installation Guide](../install/certificates.md) for certificate management and deployment options
 

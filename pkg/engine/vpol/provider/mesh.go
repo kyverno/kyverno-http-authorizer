@@ -12,19 +12,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type policyReconciler struct {
+type meshReconciler struct {
 	client    client.Client
 	polSender *sender.PolicySender
 }
 
-func NewPolicyReconciler(client client.Client, sender *sender.PolicySender) *policyReconciler {
-	return &policyReconciler{
+func NewMeshReconciler(client client.Client, sender *sender.PolicySender) *meshReconciler {
+	return &meshReconciler{
 		client:    client,
 		polSender: sender,
 	}
 }
 
-func (r *policyReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *meshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var policy v1alpha1.ValidatingPolicy
 	err := r.client.Get(ctx, req.NamespacedName, &policy)
 	if errors.IsNotFound(err) {

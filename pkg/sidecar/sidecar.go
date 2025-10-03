@@ -4,7 +4,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func Sidecar(image string, controlPlaneAddr string, externalPolicySources ...string) corev1.Container {
+func Sidecar(image string, controlPlaneAddr string,
+	controlPlaneReconnectWait, controlPlaneMaxDialInterval, healthCheckInterval string) corev1.Container {
 	container := corev1.Container{
 		Name:            "kyverno-authz-server",
 		ImagePullPolicy: corev1.PullIfNotPresent,
@@ -23,6 +24,9 @@ func Sidecar(image string, controlPlaneAddr string, externalPolicySources ...str
 			"authz-server",
 			"--probes-address=:9080",
 			"--control-plane-address=" + controlPlaneAddr,
+			"--control-plane-reconnect-wait=" + controlPlaneReconnectWait,
+			"--control-plane-max-dial-interval=" + controlPlaneMaxDialInterval,
+			"--health-check-interval=" + healthCheckInterval,
 		},
 		Env: []corev1.EnvVar{
 			{
@@ -34,9 +38,6 @@ func Sidecar(image string, controlPlaneAddr string, externalPolicySources ...str
 				},
 			},
 		},
-	}
-	for _, source := range externalPolicySources {
-		container.Args = append(container.Args, "--external-policy-source="+source)
 	}
 	return container
 }

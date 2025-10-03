@@ -41,5 +41,5 @@ stripPrefix:
 apis:
   - name: policy
     title: policy (v1alpha1)
-    package: github.com/kyverno/kyverno-envoy-plugin
+    package: github.com/kyverno/kyverno-http-authorizer
     path: apis/v1alpha1

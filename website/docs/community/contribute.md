@@ -1,6 +1,6 @@
 # Contributing
 
-Kyverno Envoy Plugin, developed by Kyverno, is an advanced end-to-end testing tool for Kubernetes. Our community plays a crucial role in shaping the project by reporting bugs, suggesting features, and improving documentation.
+Kyverno HTTP Authorizer, developed by Kyverno, is an advanced security tool for Kubernetes. Our community plays a crucial role in shaping the project by reporting bugs, suggesting features, and improving documentation.
 
 We aim to make our issue tracker, discussion board, and documentation well-structured and easy to navigate. By following our guidelines, you can help us address your requests efficiently.
 
@@ -78,8 +78,8 @@ We appreciate your efforts in reporting bugs, requesting features, and engaging 
   [report a bug]: reporting-a-bug.md
   [report a docs issue]: reporting-a-docs-issue.md
   [request a change]: requesting-a-change.md
-  [discussion board]: https://github.com/kyverno/kyverno-envoy-plugin/discussions
-  [issue tracker]: https://github.com/kyverno/kyverno-envoy-plugin/issues
+  [discussion board]: https://github.com/kyverno/kyverno-http-authorizer/discussions
+  [issue tracker]: https://github.com/kyverno/kyverno-http-authorizer/issues
   [create a pull request]: making-a-pull-request.md
 
 ## Checklist
@@ -107,7 +107,7 @@ Before interacting within the project, please consider the following questions t
 - Is your comment relevant to the topic of the current page, post, issue, or discussion, or is it better to create a new issue or discussion?
 - Does your comment add value to the conversation? Is it constructive and respectful to our community and maintainers? Could you just use a [:octicons-smiley-16: reaction][reaction] instead?
 
-  [Code of Conduct]: https://github.com/kyverno/kyverno-envoy-plugin/blob/main/CODE_OF_CONDUCT.md
+  [Code of Conduct]: https://github.com/kyverno/kyverno-http-authorizer/blob/main/CODE_OF_CONDUCT.md
   [reaction]: https://github.blog/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/
 
 ## Rights and responsibilities

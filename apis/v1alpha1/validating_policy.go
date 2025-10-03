@@ -36,7 +36,13 @@ func ToProto(pol *v1alpha1.ValidatingPolicy) *protov1alpha1.ValidatingPolicy {
 			Expression: m.Expression,
 		})
 	}
-	fp := string(*pol.Spec.FailurePolicy)
+	// TODO: check if ignore is the default
+	var fp string
+	if pol.Spec.FailurePolicy != nil {
+		fp = string(*pol.Spec.FailurePolicy)
+	} else {
+		fp = "Ignore"
+	}
 	return &protov1alpha1.ValidatingPolicy{
 		Name: pol.Name,
 		Spec: &protov1alpha1.ValidatingPolicySpec{

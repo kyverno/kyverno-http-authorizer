@@ -9,7 +9,7 @@ import (
 	"github.com/hairyhenderson/go-fsimpl/filefs"
 	"github.com/hairyhenderson/go-fsimpl/gitfs"
 	"github.com/kyverno/kyverno-http-authorizer/pkg/authz"
-	"github.com/kyverno/kyverno-http-authorizer/pkg/engine"
+	"github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	genericproviders "github.com/kyverno/kyverno-http-authorizer/pkg/engine/providers"
 	vpolcompiler "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/compiler"
 	vpolprovider "github.com/kyverno/kyverno-http-authorizer/pkg/engine/vpol/provider"
@@ -34,12 +34,12 @@ func Command() *cobra.Command {
 	var grpcAddress string
 	var grpcNetwork string
 	var kubeConfigOverrides clientcmd.ConfigOverrides
-	var externalPolicySources []string
 	var kubePolicySource bool
 	var initialSendPolicyWait time.Duration
 	var maxSendPolicyInterval time.Duration
 	var maxClientInactiveDuration time.Duration
 	var clientFlushInterval time.Duration
+	var externalSources []string
 	command := &cobra.Command{
 		Use:   "control-plane",
 		Short: "Start the Kyverno HTTP authorizer control plane",
@@ -67,8 +67,24 @@ func Command() *cobra.Command {
 					// wait all tasks in the group are over
 					defer group.Wait()
 
+					vpolCompiler := vpolcompiler.NewCompiler()
 					logger := logrus.New()
-					s := sender.NewPolicySender(ctx, logger,
+
+					extern, err := GetExternalProviders(logger, vpolCompiler, externalSources...)
+					if err != nil {
+						return err
+					}
+					policies := []*v1alpha1.ValidatingPolicy{}
+					for _, e := range extern {
+						providerPolicies, err := e.Policies(ctx)
+						if err != nil {
+							logger.Error()
+							continue
+						}
+						policies = append(policies, providerPolicies...)
+					}
+
+					s := sender.NewPolicySender(ctx, logger, policies,
 						initialSendPolicyWait,
 						maxSendPolicyInterval,
 						clientFlushInterval,
@@ -90,7 +106,7 @@ func Command() *cobra.Command {
 							return fmt.Errorf("failed to construct manager: %w", err)
 						}
 						// create policy reconciler
-						r := vpolprovider.NewPolicyReconciler(mgr.GetClient(), s)
+						r := vpolprovider.NewMeshReconciler(mgr.GetClient(), s)
 						if err := ctrl.NewControllerManagedBy(mgr).For(&v1alpha1.ValidatingPolicy{}).Complete(r); err != nil {
 							return fmt.Errorf("failed to register controller to manager: %w", err)
 						}
@@ -138,24 +154,23 @@ func Command() *cobra.Command {
 	command.Flags().StringVar(&grpcAddress, "grpc-address", ":9081", "Address to listen on")
 	command.Flags().StringVar(&grpcNetwork, "grpc-network", "tcp", "Network to listen on")
 	command.Flags().StringVar(&metricsAddress, "metrics-address", ":9082", "Address to listen on for metrics")
-	command.Flags().StringArrayVar(&externalPolicySources, "external-policy-source", nil, "External policy sources")
+	command.Flags().StringArrayVar(&externalSources, "external-policy-source", nil, "External policy sources")
 	command.Flags().BoolVar(&kubePolicySource, "kube-policy-source", true, "Enable in-cluster kubernetes policy source")
 	clientcmd.BindOverrideFlags(&kubeConfigOverrides, command.Flags(), clientcmd.RecommendedConfigOverrideFlags("kube-"))
 	return command
 }
 
-// TODO: bring this back
-func getExternalProviders(vpolCompiler vpolcompiler.Compiler, urls ...string) ([]engine.Provider, error) {
+func GetExternalProviders(logger *logrus.Logger, vpolCompiler vpolcompiler.Compiler, urls ...string) ([]*providers.FsProvider, error) {
 	mux := fsimpl.NewMux()
 	mux.Add(filefs.FS)
 	mux.Add(gitfs.FS)
-	var providers []engine.Provider
+	var providers []*providers.FsProvider
 	for _, url := range urls {
 		fsys, err := mux.Lookup(url)
 		if err != nil {
 			return nil, err
 		}
-		providers = append(providers, genericproviders.NewFsProvider(vpolCompiler, fsys))
+		providers = append(providers, genericproviders.NewFsProvider(logger, vpolCompiler, fsys))
 	}
 	return providers, nil
 }

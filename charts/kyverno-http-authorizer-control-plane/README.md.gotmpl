@@ -18,10 +18,10 @@ Add `kyverno-http-authorizer` Helm repository:
 helm repo add kyverno-http-authorizer https://kyverno.github.io/kyverno-http-authorizer/
 ```
 
-Install `kyverno-authz-server` Helm chart:
+Install `kyverno-http-authorizer-control-plane` Helm chart:
 
 ```shell
-helm install kyverno-authz-server --namespace kyverno --create-namespace kyverno-http-authorizer/kyverno-authz-server
+helm install kyverno-http-authorizer-control-plane --namespace kyverno --create-namespace kyverno-http-authorizer/kyverno-http-authorizer-control-plane
 ```
 
 {{ template "chart.valuesSection" . }}

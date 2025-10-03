@@ -1,13 +1,13 @@
 # Community
 
-The Kyverno Envoy Plugin has a growing community and we would definitely love to see you join and contribute.
+The Kyverno HTTP Authorizer has a growing community and we would definitely love to see you join and contribute.
 
 Everyone is welcome to make suggestions, report bugs, open feature requests, contribute code or docs, participate in discussions, write blogs or anything that can benefit the project.
 
 ---
 
 <center>
-The Kyverno Envoy Plugin is built and maintained under the Kyverno umbrella but decisions are
+The Kyverno HTTP Authorizer is built and maintained under the Kyverno umbrella but decisions are
 <h3><b>Community driven</b></h3>
 <h3><b>Everyone's voice matters</b></h3>
 </center>
@@ -20,7 +20,7 @@ Join our slack channel [#kyverno](https://kubernetes.slack.com/archives/CLGR9BJU
 
 ## RoadMap
 
-For detailed information on our planned features and upcoming updates, please [view our Roadmap](https://github.com/kyverno/kyverno-envoy-plugin/blob/main/ROADMAP.md).
+For detailed information on our planned features and upcoming updates, please [view our Roadmap](https://github.com/kyverno/kyverno-http-authorizer/blob/main/ROADMAP.md).
 
 ## Contributing
 
@@ -32,4 +32,4 @@ Please read the [contributing guide](https://github.com/kyverno/kyverno/blob/mai
 
 ## Adopters
 
-If you are using the Kyverno Envoy Plugin and want to share it publicly we always appreciate a bit of support. Pull requests to the [ADOPTERS LIST](https://github.com/kyverno/kyverno-envoy-plugin/blob/main/ADOPTERS.md) will put a smile on our faces :smile:
+If you are using the Kyverno HTTP Authorizer and want to share it publicly we always appreciate a bit of support. Pull requests to the [ADOPTERS LIST](https://github.com/kyverno/kyverno-http-authorizer/blob/main/ADOPTERS.md) will put a smile on our faces :smile:

@@ -1,191 +1,131 @@
-# Authorization rules
+# Validating Policies
 
-An `AuthorizationPolicy` main concern is to define authorization rules to `deny` or `allow` requests.
+A `ValidatingPolicy` defines validation rules to authorize HTTP requests.
 
-Every authorization rule is made of an optional `match` statement and a required `response` statement. Both statements are written in [CEL](https://github.com/google/cel-spec).
+Each validation rule is a CEL expression that evaluates to either an `http.Response` object or `null`. All expressions are written in [CEL](https://github.com/google/cel-spec).
 
-If the `match` statement is present and evaluates to `true`, the `response` statement is used to create the response payload returned to the envoy proxy.
-Depending on the rule type, the response is expected to be an envoy.OkResponse or envoy.DeniedResponse.
+When a validation expression returns an `http.Response`, that response is immediately returned to the caller. If the expression returns `null`, evaluation continues to the next validation in the array.
 
-Creating an [OkResponse](../cel-extensions/envoy.md#okresponse) or [DeniedResponse](../cel-extensions/envoy.md#deniedresponse) can be a tedious task, you need to remember the different types names and format.
-
-The CEL engine used to evaluate the authorization rules has been extended with a library to make the creation of responses easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
+The CEL engine has been extended with libraries to make working with HTTP requests and responses easier. Browse the [available libraries documentation](../cel-extensions/index.md) for details.
 
 ## Evaluation order
 
-1. All `deny` rules are evaluated first, the first matching rule is used to send the deny response to the envoy proxy.
-1. If no `deny` rule matched, `allow` rules are evaluated and the first matching rule is used to send the response to the envoy proxy.
-1. If no rule matched, the request is allowed by default.
+Validations are evaluated in the order they appear in the `validations` array:
 
-!!!info
+1. Each validation expression is evaluated sequentially
+2. If a validation returns an `http.Response` (non-null), that response is returned immediately and evaluation stops
+3. If a validation returns `null`, evaluation continues to the next validation
+4. If all validations return `null`, the request is denied by default
 
-    When multiple policies are present, `deny` and `allow` rules are concatenated together in policy name alphabetical order.
+!!!warning
 
-## Authorization rules
+    When multiple policies match a request (based on `matchConditions`), a random policy from the matches will be selected and its response will be used. It is best practice to define strict match conditions for each policy to avoid conflicts.
+
+## Validation rules
 
 The policy below will allow requests if they contain the header `x-force-authorized` with the value `enabled` or `true`.
 If the header is not present or has a different value, the request will be denied.
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   failurePolicy: Fail
+  evaluation:
+    mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
+    expression: object.headers.get("x-force-authorized")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  # make an authorisation decision based on the value of `variables.allowed`
-  # - deny the request with 403 status code if it is `false`
-  # - else allow the request
-  deny:
-  - match: >
+  validations:
+  # deny the request with 403 if not allowed
+  - expression: |
       !variables.allowed
-    response: >
-      envoy.Denied(403).Response()
-  allow:
-  - response: >
-      envoy.Allowed().Response()
+        ? http.response().status(403).withBody("Forbidden")
+        : null
+  # allow the request
+  - expression: |
+      http.response().status(200)
 ```
 
-In this simple rule:
+In this policy:
 
-- `envoy.Allowed().Response()`
+- The first validation checks if the request is not allowed and returns a `403` response if true, or `null` to continue
+- The second validation returns a `200` response to allow the request
+- If the first validation returns `null`, the second validation is evaluated
 
-    Creates an `OkResponse` to allow the request
-
-- `envoy.Denied(403).Response()`
-
-    Creates a `DeniedResponse` to deny the request with status code `403`
-
-However, we can do a lot more.
-Envoy can add or remove headers, query parameters, register dynamic metadata passed along the filters chain, and even change the response body.
-
-![dynamic metadata](../schemas/dynamic-metadata.png)
-
-### The hard way
-
-Below is the same policy, creating the `envoy.OkResponse` and `envoy.DeniedResponse` manually.
-
-```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: demo
-spec:
-  failurePolicy: Fail
-  variables:
-  - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
-  - name: allowed
-    expression: variables.force_authorized in ["enabled", "true"]
-  deny:
-  - match: >
-      !variables.allowed
-    response: >
-      envoy.DeniedResponse{
-        status: google.rpc.Status{
-          code: 7
-        },
-        http_response: envoy.service.auth.v3.DeniedHttpResponse{
-          status: envoy.type.v3.HttpStatus{
-            code: 403
-          }
-        }
-      }
-  allow:
-  - response: >
-      envoy.OkResponse{
-        status: google.rpc.Status{
-          code: 0
-        },
-        http_response: envoy.service.auth.v3.OkHttpResponse{}
-      }
-```
+You can customize responses with status codes, headers, and body content using the [http library](../cel-extensions/http.md).
 
 ### Advanced example
 
-This second policy showcases a more advanced example.
+This policy showcases a more advanced example with multiple validation checks.
 
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
+  failurePolicy: Fail
+  evaluation:
+    mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("") in ["enabled", "true"]
+    expression: object.headers.get("x-force-authorized") in ["enabled", "true"]
   - name: force_unauthenticated
-    expression: object.attributes.request.http.headers[?"x-force-unauthenticated"].orValue("") in ["enabled", "true"]
-  - name: metadata
-    expression: '{"my-new-metadata": "my-new-value"}'
-  deny:
-    # if force_unauthenticated -> 401
-  - match: >
+    expression: object.headers.get("x-force-unauthenticated") in ["enabled", "true"]
+  validations:
+  # if force_unauthenticated -> 401
+  - expression: |
       variables.force_unauthenticated
-    response: >
-      envoy
-        .Denied(401)
-        .WithBody("Authentication Failed")
-        .Response()
-    # if not force_authorized -> 403
-  - match: >
+        ? http.response().status(401).withBody("Authentication Failed")
+        : null
+  # if not force_authorized -> 403
+  - expression: |
       !variables.force_authorized
-    response: >
-      envoy
-        .Denied(403)
-        .WithBody("Unauthorized Request")
-        .Response()
-  allow:
-    # else -> 200
-  - response: >
-      envoy
-        .Allowed()
-        .WithHeader("x-validated-by", "my-security-checkpoint")
-        .WithoutHeader("x-force-authorized")
-        .WithResponseHeader("x-add-custom-response-header", "added")
-        .Response()
-        .WithMetadata(variables.metadata)
+        ? http.response().status(403).withBody("Unauthorized Request")
+        : null
+  # else -> 200 with custom headers
+  - expression: |
+      http.response()
+        .status(200)
+        .withHeader("x-validated-by", "kyverno")
+        .withHeader("x-custom-header", "custom-value")
 ```
 
-Notice this policy uses helper functions:
+This policy demonstrates:
 
-- [envoy.Allowed](../cel-extensions/envoy.md#envoyallowed)
+- **Sequential evaluation**: Validations are checked in order
+- **Conditional responses**: Using ternary operators to return responses or null
+- **Custom headers**: Adding headers to successful responses
+- **Multiple status codes**: Different responses for authentication (401) vs authorization (403) failures
 
-    To create an OK http response
+### Using external data
 
-- [envoy.Denied](../cel-extensions/envoy.md#envoydenied)
+You can fetch data from external sources to make authorization decisions:
 
-    To create a DENIED http response
-
-- [Response](../cel-extensions/envoy.md#response)
-
-    To create a check response from an http response
-
-- [WithHeader](../cel-extensions/envoy.md#withheader)
-
-    To add a request header
-
-- [WithoutHeader](../cel-extensions/envoy.md#withoutheader)
-
-    To remove a request header
-
-- [WithResponseHeader](../cel-extensions/envoy.md#withresponseheader)
-
-    To add a response header
-
-- [WithBody](../cel-extensions/envoy.md#withbody)
-
-    To modify the response body
-
-- [WithMetadata](../cel-extensions/envoy.md#withmetadata)
-
-    To add dynamic metadata in the envoy filter chain (this is useful when you want to pass data to another filter in the chain or you want to print it in the application logs)
+```yaml
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+  name: external-data-policy
+spec:
+  evaluation:
+    mode: HTTP
+  variables:
+  - name: secretWord
+    expression: |
+      http.Get("http://my-server:3000").secretWord
+  validations:
+  - expression: |
+      object.headers.get("secret-header") == variables.secretWord
+        ? http.response().status(200).withBody("Valid secret")
+        : http.response().status(403).withBody("Invalid secret")
+```
 
 !!!info
 
-    The full documentation of the CEL Envoy library is available [here](../cel-extensions/envoy.md).
+    The full documentation of the CEL HTTP library is available [here](../cel-extensions/http.md).

@@ -1,12 +1,12 @@
 ---
-apiVersion: apiextensions.k8s.io/v1 # TODO: replace with the validating policy type
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: validatingpolicies.envoy.kyverno.io
+  name: validatingpolicies.policies.kyverno.io
 spec:
-  group: envoy.kyverno.io
+  group: policies.kyverno.io
   names:
     categories:
     - kyverno
@@ -1526,7 +1526,6 @@ spec:
                 type: boolean
             type: object
         required:
-        - metadata
         - spec
         type: object
     selectableFields:

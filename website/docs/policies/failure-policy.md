@@ -13,48 +13,60 @@ If not set, the failure policy defaults to `Fail`.
 
 !!!info
 
-    FailurePolicy does not define how validations that evaluate to `false` are handled.
+    FailurePolicy does not define how validations that return `null` or specific HTTP responses are handled. It only controls behavior when errors occur during policy evaluation.
 
 ## Fail
 
+When set to `Fail`, any errors during policy evaluation will cause the request to be denied.
+
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   # if something fails the request will be denied
   failurePolicy: Fail
+  evaluation:
+    mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
+    expression: object.headers.get("x-force-authorized")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  deny:
-  - match: >
+  validations:
+  - expression: |
       !variables.allowed
-    response: >
-      envoy.Denied(403).Response()
+        ? http.response().status(403).withBody("Forbidden")
+        : null
+  - expression: |
+      http.response().status(200)
 ```
 
 ## Ignore
 
+When set to `Ignore`, errors during policy evaluation will be ignored and the request will be allowed.
+
 ```yaml
-apiVersion: envoy.kyverno.io/v1alpha1
-kind: AuthorizationPolicy
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
 metadata:
   name: demo
 spec:
   # if something fails the failure will be ignored and the request will be allowed
   failurePolicy: Ignore
+  evaluation:
+    mode: HTTP
   variables:
   - name: force_authorized
-    expression: object.attributes.request.http.headers[?"x-force-authorized"].orValue("")
+    expression: object.headers.get("x-force-authorized")
   - name: allowed
     expression: variables.force_authorized in ["enabled", "true"]
-  deny:
-  - match: >
+  validations:
+  - expression: |
       !variables.allowed
-    response: >
-      envoy.Denied(403).Response()
+        ? http.response().status(403).withBody("Forbidden")
+        : null
+  - expression: |
+      http.response().status(200)
 ```
