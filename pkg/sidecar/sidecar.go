@@ -13,12 +13,9 @@ func Sidecar(image string, controlPlaneAddr string,
 		Ports: []corev1.ContainerPort{{
 			Name:          "http",
 			Protocol:      corev1.ProtocolTCP,
-			ContainerPort: 9080,
-		}, {
-			Name:          "grpc",
-			Protocol:      corev1.ProtocolTCP,
-			ContainerPort: 9081,
-		}},
+			ContainerPort: 9083,
+		},
+		},
 		Args: []string{
 			"serve",
 			"authz-server",

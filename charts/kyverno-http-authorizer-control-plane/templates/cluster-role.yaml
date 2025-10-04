@@ -7,9 +7,8 @@ metadata:
     {{- include "kyverno-http-authorizer-control-plane.labels" . | nindent 4 }}
 rules:
 - apiGroups:
-  - envoy.kyverno.io
+  - policies.kyverno.io
   resources:
-  - authorizationpolicies
   - validatingpolicies
   verbs:
   - get
