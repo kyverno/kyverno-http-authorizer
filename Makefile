@@ -34,6 +34,8 @@ KO                                 ?= $(TOOLS_DIR)/ko
 KO_VERSION                         ?= v0.15.1
 REFERENCE_DOCS                     := $(TOOLS_DIR)/genref
 REFERENCE_DOCS_VERSION             := latest
+BUF                                := $(TOOLS_DIR)/buf
+BUF_VERSION                        ?= v1.47.2
 PIP                                ?= "pip"
 ifeq ($(GOOS), darwin)
 SED                                := gsed
@@ -58,12 +60,17 @@ $(REFERENCE_DOCS):
 	@echo Install genref... >&2
 	@GOBIN=$(TOOLS_DIR) go install github.com/kubernetes-sigs/reference-docs/genref@$(REFERENCE_DOCS_VERSION)
 
+$(BUF):
+	@echo Install buf... >&2
+	@GOBIN=$(TOOLS_DIR) go install github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
+
 .PHONY: install-tools
 install-tools: ## Install tools
 install-tools: $(HELM)
 install-tools: $(KIND)
 install-tools: $(KO)
 install-tools: $(REFERENCE_DOCS)
+install-tools: $(BUF)
 
 .PHONY: clean-tools
 clean-tools: ## Remove installed tools
@@ -73,6 +80,12 @@ clean-tools: ## Remove installed tools
 ###########
 # CODEGEN #
 ###########
+
+.PHONY: codegen-proto
+codegen-proto: ## Generate proto files
+codegen-proto: $(BUF)
+	@echo Generate proto files... >&2
+	@cd apis/v1alpha1 && $(BUF) generate
 
 .PHONY: codegen-mkdocs
 codegen-mkdocs: ## Generate mkdocs website
@@ -94,6 +107,7 @@ codegen-api-docs: $(REFERENCE_DOCS)
 
 .PHONY: codegen
 codegen: ## Rebuild all generated code and docs
+codegen: codegen-proto
 codegen: codegen-mkdocs
 codegen: codegen-helm-docs
 codegen: codegen-api-docs
